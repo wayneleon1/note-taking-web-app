@@ -19,7 +19,6 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0;
 }
 
 /* ── Logo ── */
@@ -65,7 +64,26 @@ body {
   margin-bottom: 20px;
 }
 
-/* full-width sign-up button */
+/* Password label row with "Forgot" link */
+.password-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.forgot-link {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-neutral-500);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.forgot-link:hover {
+  color: var(--color-neutral-950);
+}
+
+/* full-width login button */
 .auth-form .btn-primary {
   width: 100%;
   padding: 14px 20px;

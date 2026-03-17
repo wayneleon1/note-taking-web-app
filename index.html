@@ -3,24 +3,512 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
     <link
       rel="icon"
       type="image/png"
       sizes="32x32"
       href="./assets/images/favicon-32x32.png"
     />
-
-    <title>Note-taking web app</title>
+    <title>All Notes | Note-taking web app</title>
+    <link rel="stylesheet" href="/styles/index.css" />
+    <link rel="stylesheet" href="/styles/notes-layout.css" />
   </head>
   <body>
-    All Notes Archived Notes Tags
+    <div class="app-shell">
+      <!-- ══════════════════════════════════════
+       LEFT SIDEBAR  (desktop only)
+  ══════════════════════════════════════ -->
+      <aside class="sidebar" aria-label="Sidebar navigation">
+        <a href="#" class="logo sidebar-logo">
+          <img src="./assets/images/logo.svg" alt="Notes logo" />
+        </a>
 
-    <!-- Page title -->
+        <!-- Main nav -->
+        <nav class="sidebar-nav" aria-label="Main navigation">
+          <a href="#" class="sidebar-nav-item active" data-view="all">
+            <span class="nav-left">
+              <img
+                src="./assets/images/icon-home.svg"
+                alt=""
+                class="nav-icon"
+              />
+              All Notes
+            </span>
+            <img
+              src="./assets/images/icon-chevron-right.svg"
+              alt=""
+              class="nav-chevron"
+            />
+          </a>
+          <a href="#" class="sidebar-nav-item" data-view="archived">
+            <span class="nav-left">
+              <img
+                src="./assets/images/icon-archive.svg"
+                alt=""
+                class="nav-icon"
+              />
+              Archived Notes
+            </span>
+            <img
+              src="./assets/images/icon-chevron-right.svg"
+              alt=""
+              class="nav-chevron"
+            />
+          </a>
+        </nav>
 
-    <a href="/auth/signup.html">Signup Page </a>
+        <!-- Tags -->
+        <div>
+          <p class="sidebar-section-title">Tags</p>
+          <nav class="sidebar-tags" aria-label="Tags">
+            <a href="#" class="sidebar-nav-item" data-tag="Cooking">
+              <span class="nav-left">
+                <img
+                  src="./assets/images/icon-tag.svg"
+                  alt=""
+                  class="nav-icon"
+                />
+                Cooking
+              </span>
+            </a>
+            <a href="#" class="sidebar-nav-item" data-tag="Dev">
+              <span class="nav-left">
+                <img
+                  src="./assets/images/icon-tag.svg"
+                  alt=""
+                  class="nav-icon"
+                />
+                Dev
+              </span>
+            </a>
+            <a href="#" class="sidebar-nav-item" data-tag="Fitness">
+              <span class="nav-left">
+                <img
+                  src="./assets/images/icon-tag.svg"
+                  alt=""
+                  class="nav-icon"
+                />
+                Fitness
+              </span>
+            </a>
+            <a href="#" class="sidebar-nav-item" data-tag="Health">
+              <span class="nav-left">
+                <img
+                  src="./assets/images/icon-tag.svg"
+                  alt=""
+                  class="nav-icon"
+                />
+                Health
+              </span>
+            </a>
+            <a href="#" class="sidebar-nav-item" data-tag="Personal">
+              <span class="nav-left">
+                <img
+                  src="./assets/images/icon-tag.svg"
+                  alt=""
+                  class="nav-icon"
+                />
+                Personal
+              </span>
+            </a>
+            <a href="#" class="sidebar-nav-item" data-tag="React">
+              <span class="nav-left">
+                <img
+                  src="./assets/images/icon-tag.svg"
+                  alt=""
+                  class="nav-icon"
+                />
+                React
+              </span>
+            </a>
+            <a href="#" class="sidebar-nav-item" data-tag="Recipes">
+              <span class="nav-left">
+                <img
+                  src="./assets/images/icon-tag.svg"
+                  alt=""
+                  class="nav-icon"
+                />
+                Recipes
+              </span>
+            </a>
+            <a href="#" class="sidebar-nav-item" data-tag="Shopping">
+              <span class="nav-left">
+                <img
+                  src="./assets/images/icon-tag.svg"
+                  alt=""
+                  class="nav-icon"
+                />
+                Shopping
+              </span>
+            </a>
+            <a href="#" class="sidebar-nav-item" data-tag="Travel">
+              <span class="nav-left">
+                <img
+                  src="./assets/images/icon-tag.svg"
+                  alt=""
+                  class="nav-icon"
+                />
+                Travel
+              </span>
+            </a>
+            <a href="#" class="sidebar-nav-item" data-tag="TypeScript">
+              <span class="nav-left">
+                <img
+                  src="./assets/images/icon-tag.svg"
+                  alt=""
+                  class="nav-icon"
+                />
+                TypeScript
+              </span>
+            </a>
+          </nav>
+        </div>
+      </aside>
+      <!-- /sidebar -->
 
-    Search by title, content, or tags Create New Note Tags Last Edited Archive
-    Note Delete Note Save Note Cancel
+      <!-- ══════════════════════════════════════
+       MAIN AREA
+  ══════════════════════════════════════ -->
+      <div class="main-area">
+        <!-- Top bar -->
+        <header class="topbar">
+          <!-- Logo (hidden desktop, shown tablet/mobile) -->
+          <a href="#" class="logo topbar-logo" aria-label="Notes home">
+            <svg
+              viewBox="0 0 28 28"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                d="M22 4C22 4 18 6 14 12C10 18 9 22 9 22L13 18C13 18 12 21 11 23C11 23 15 20 17 16L14 17C14 17 17 13 22 4Z"
+                fill="var(--color-blue-500)"
+                stroke="var(--color-blue-700)"
+                stroke-width="1"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M9 22 Q8 24 6 25"
+                stroke="var(--color-blue-700)"
+                stroke-width="1.5"
+                stroke-linecap="round"
+              />
+            </svg>
+            <span class="logo-text">Notes</span>
+          </a>
+
+          <!-- Title (desktop) -->
+          <h1 class="topbar-title">All Notes</h1>
+
+          <!-- Search -->
+          <div class="topbar-search" role="search">
+            <img src="./assets/images/icon-search.svg" alt="" />
+            <input
+              type="search"
+              placeholder="Search by title, content, or tags..."
+              aria-label="Search notes"
+            />
+          </div>
+
+          <!-- Settings -->
+          <button class="icon-btn topbar-settings" aria-label="Settings">
+            <img src="./assets/images/icon-settings.svg" alt="" />
+          </button>
+        </header>
+
+        <!-- Three-pane content row -->
+        <div class="content-row">
+          <!-- ── Notes list panel ── -->
+          <section class="notes-panel" aria-label="Notes list">
+            <div class="notes-panel-header">
+              <button class="btn-create" id="btn-create-note">
+                <img src="./assets/images/icon-plus.svg" alt="" />
+                + Create New Note
+              </button>
+            </div>
+
+            <div class="notes-list" role="list" id="notes-list">
+              <article
+                class="note-card active"
+                role="listitem"
+                data-note-id="1"
+              >
+                <h3 class="note-card-title">React Performance Optimization</h3>
+                <div class="note-card-tags">
+                  <span class="tag-badge">Dev</span>
+                  <span class="tag-badge">React</span>
+                </div>
+                <p class="note-card-date">29 Oct 2024</p>
+              </article>
+
+              <article class="note-card" role="listitem" data-note-id="2">
+                <h3 class="note-card-title">Japan Travel Planning</h3>
+                <div class="note-card-tags">
+                  <span class="tag-badge">Travel</span>
+                  <span class="tag-badge">Personal</span>
+                </div>
+                <p class="note-card-date">28 Oct 2024</p>
+              </article>
+
+              <article class="note-card" role="listitem" data-note-id="3">
+                <h3 class="note-card-title">Favorite Pasta Recipes</h3>
+                <div class="note-card-tags">
+                  <span class="tag-badge">Cooking</span>
+                  <span class="tag-badge">Recipes</span>
+                </div>
+                <p class="note-card-date">27 Oct 2024</p>
+              </article>
+
+              <article class="note-card" role="listitem" data-note-id="4">
+                <h3 class="note-card-title">Weekly Workout Plan</h3>
+                <div class="note-card-tags">
+                  <span class="tag-badge">Dev</span>
+                  <span class="tag-badge">React</span>
+                </div>
+                <p class="note-card-date">25 Oct 2024</p>
+              </article>
+
+              <article class="note-card" role="listitem" data-note-id="5">
+                <h3 class="note-card-title">Meal Prep Ideas</h3>
+                <div class="note-card-tags">
+                  <span class="tag-badge">Cooking</span>
+                  <span class="tag-badge">Health</span>
+                  <span class="tag-badge">Recipes</span>
+                </div>
+                <p class="note-card-date">12 Oct 2024</p>
+              </article>
+
+              <article class="note-card" role="listitem" data-note-id="6">
+                <h3 class="note-card-title">Reading List</h3>
+                <div class="note-card-tags">
+                  <span class="tag-badge">Personal</span>
+                  <span class="tag-badge">Dev</span>
+                </div>
+                <p class="note-card-date">05 Oct 2024</p>
+              </article>
+
+              <article class="note-card" role="listitem" data-note-id="7">
+                <h3 class="note-card-title">Fitness Goals 2025</h3>
+                <div class="note-card-tags">
+                  <span class="tag-badge">Fitness</span>
+                  <span class="tag-badge">Health</span>
+                  <span class="tag-badge">Personal</span>
+                </div>
+                <p class="note-card-date">22 Sep 2024</p>
+              </article>
+            </div>
+          </section>
+          <!-- /notes-panel -->
+
+          <!-- ── Note detail panel ── -->
+          <section
+            class="detail-panel"
+            id="detail-panel"
+            aria-label="Note detail"
+          >
+            <!-- Mobile top bar (shown only on mobile inside this panel) -->
+            <div class="mobile-detail-bar">
+              <button class="back-btn" id="btn-back" aria-label="Go back">
+                <img src="./assets/images/icon-arrow-left.svg" alt="" />
+                Go Back
+              </button>
+              <div class="mobile-bar-actions">
+                <button class="icon-btn" aria-label="Delete note">
+                  <img src="./assets/images/icon-delete.svg" alt="" />
+                </button>
+                <button class="icon-btn" aria-label="Archive note">
+                  <img src="./assets/images/icon-archive.svg" alt="" />
+                </button>
+                <button class="mobile-cancel-btn">Cancel</button>
+                <button class="mobile-save-btn">Save Note</button>
+              </div>
+            </div>
+
+            <!-- Body -->
+            <div class="detail-body">
+              <textarea class="detail-title" rows="2" aria-label="Note title">
+React Performance Optimization</textarea
+              >
+
+              <div class="detail-meta">
+                <div class="detail-meta-row">
+                  <img
+                    src="./assets/images/icon-tag.svg"
+                    alt=""
+                    class="meta-icon"
+                  />
+                  <span class="meta-key">Tags</span>
+                  <span class="meta-value">Dev, React</span>
+                </div>
+                <div class="detail-meta-row">
+                  <img
+                    src="./assets/images/icon-clock.svg"
+                    alt=""
+                    class="meta-icon"
+                  />
+                  <span class="meta-key">Last edited</span>
+                  <span class="meta-value">29 Oct 2024</span>
+                </div>
+              </div>
+
+              <textarea class="detail-content" aria-label="Note content">
+Key performance optimization techniques:
+
+1. Code Splitting
+- Use React.lazy() for route-based splitting
+- Implement dynamic imports for heavy components
+
+2. Memoization
+- useMemo for expensive calculations
+- useCallback for function props
+- React.memo for component optimization
+
+3. Virtual List Implementation
+- Use react-window for long lists
+- Implement infinite scrolling
+
+TODO: Benchmark current application and identify bottlenecks</textarea
+              >
+            </div>
+
+            <!-- Desktop footer actions -->
+            <div class="detail-footer">
+              <button class="btn btn-primary">Save Note</button>
+              <button class="btn btn-secondary">Cancel</button>
+            </div>
+          </section>
+          <!-- /detail-panel -->
+
+          <!-- ── Right actions panel (desktop) ── -->
+          <aside class="actions-panel" aria-label="Note actions">
+            <button class="action-card">
+              <img src="./assets/images/icon-archive.svg" alt="" />
+              Archive Note
+            </button>
+            <button class="action-card">
+              <img src="./assets/images/icon-delete.svg" alt="" />
+              Delete Note
+            </button>
+          </aside>
+        </div>
+        <!-- /content-row -->
+      </div>
+      <!-- /main-area -->
+    </div>
+    <!-- /app-shell -->
+
+    <!-- ══════════════════════════════════════
+     BOTTOM NAV  (tablet + mobile)
+══════════════════════════════════════ -->
+    <nav class="bottom-nav" aria-label="Bottom navigation">
+      <button class="bottom-nav-item active" data-view="all">
+        <img src="./assets/images/icon-home.svg" alt="" />
+        Home
+      </button>
+      <button class="bottom-nav-item" data-view="search">
+        <img src="./assets/images/icon-search.svg" alt="" />
+        Search
+      </button>
+      <button class="bottom-nav-item" data-view="archived">
+        <img src="./assets/images/icon-archive.svg" alt="" />
+        Archived
+      </button>
+      <button class="bottom-nav-item" data-view="tags">
+        <img src="./assets/images/icon-tag.svg" alt="" />
+        Tags
+      </button>
+      <button class="bottom-nav-item" data-view="settings">
+        <img src="./assets/images/icon-settings.svg" alt="" />
+        Settings
+      </button>
+    </nav>
+
+    <!-- FAB (tablet + mobile) -->
+    <button class="fab" id="fab-create" aria-label="Create new note">
+      <img src="./assets/images/icon-plus.svg" alt="" />
+    </button>
+
+    <script>
+      const noteCards = document.querySelectorAll(".note-card");
+      const detailPanel = document.getElementById("detail-panel");
+      const btnBack = document.getElementById("btn-back");
+      const fabCreate = document.getElementById("fab-create");
+      const btnCreateNote = document.getElementById("btn-create-note");
+
+      /* ── Open detail panel (mobile / tablet overlay) ── */
+      function openDetail() {
+        if (window.innerWidth < 1024) {
+          detailPanel.classList.add("mobile-visible");
+        }
+      }
+
+      /* ── Close detail panel ── */
+      function closeDetail() {
+        detailPanel.classList.remove("mobile-visible");
+      }
+
+      /* ── Note card click → open detail ── */
+      noteCards.forEach((card) => {
+        card.addEventListener("click", () => {
+          noteCards.forEach((c) => c.classList.remove("active"));
+          card.classList.add("active");
+          openDetail();
+        });
+      });
+
+      /* ── Back button ── */
+      btnBack && btnBack.addEventListener("click", closeDetail);
+
+      /* ── Cancel buttons ── */
+      document
+        .querySelectorAll(".mobile-cancel-btn")
+        .forEach((btn) => btn.addEventListener("click", closeDetail));
+
+      /* ── FAB & Create button → new note ── */
+      function openNewNote() {
+        document.querySelector(".detail-title").value = "";
+        document.querySelector(".detail-content").value = "";
+        noteCards.forEach((c) => c.classList.remove("active"));
+        openDetail();
+        // Trigger resize after clearing
+        document.querySelectorAll("textarea").forEach((ta) => {
+          ta.style.height = "auto";
+          ta.style.height = ta.scrollHeight + "px";
+        });
+      }
+      fabCreate && fabCreate.addEventListener("click", openNewNote);
+      btnCreateNote && btnCreateNote.addEventListener("click", openNewNote);
+
+      /* ── Bottom nav active state ── */
+      document.querySelectorAll(".bottom-nav-item").forEach((item) => {
+        item.addEventListener("click", () => {
+          document
+            .querySelectorAll(".bottom-nav-item")
+            .forEach((i) => i.classList.remove("active"));
+          item.classList.add("active");
+        });
+      });
+
+      /* ── Sidebar nav active state ── */
+      document.querySelectorAll(".sidebar-nav-item").forEach((item) => {
+        item.addEventListener("click", (e) => {
+          e.preventDefault();
+          document
+            .querySelectorAll(".sidebar-nav-item")
+            .forEach((i) => i.classList.remove("active"));
+          item.classList.add("active");
+        });
+      });
+
+      /* ── Auto-resize textareas ── */
+      document.querySelectorAll("textarea").forEach((ta) => {
+        const resize = () => {
+          ta.style.height = "auto";
+          ta.style.height = ta.scrollHeight + "px";
+        };
+        ta.addEventListener("input", resize);
+        resize();
+      });
+    </script>
   </body>
 </html>
