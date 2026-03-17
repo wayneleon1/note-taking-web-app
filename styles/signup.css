@@ -1,0 +1,171 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  /* font-family: "Manrope", sans-serif; */
+  background-color: var(--color-neutral-100);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  color: var(--color-neutral-950);
+}
+
+/* ── Card ── */
+.auth-card {
+  background: var(--color-neutral-0);
+  border: 1px solid var(--color-neutral-200);
+  border-radius: 16px;
+  padding: 40px 48px;
+  width: 100%;
+  max-width: 540px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+/* ── Logo ── */
+.auth-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  text-decoration: none;
+}
+
+.auth-logo svg {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+/* ── Heading block ── */
+.auth-heading {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.auth-heading h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-neutral-950);
+  margin-bottom: 6px;
+}
+
+.auth-heading p {
+  font-size: 14px;
+  color: var(--color-neutral-500);
+  line-height: 1.5;
+}
+
+/* ── Form ── */
+.auth-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+/* full-width sign-up button */
+.auth-form .btn-primary {
+  width: 100%;
+  padding: 14px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 10px;
+  margin-top: 4px;
+}
+
+/* ── Divider ── */
+.auth-divider {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  color: var(--color-neutral-400);
+  font-size: 13px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--color-neutral-200);
+}
+
+/* ── Google button ── */
+.btn-google {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 13px 20px;
+  border-radius: 10px;
+  border: 1.5px solid var(--color-neutral-200);
+  background: var(--color-neutral-0);
+  font-family: "Manrope", sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-neutral-950);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+  margin-bottom: 20px;
+}
+
+.btn-google:hover {
+  background-color: var(--color-neutral-50);
+  border-color: var(--color-neutral-300);
+}
+
+.btn-google svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+/* ── Footer link ── */
+.auth-footer {
+  font-size: 14px;
+  color: var(--color-neutral-500);
+}
+
+.auth-footer a {
+  color: var(--color-neutral-950);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-footer a:hover {
+  text-decoration: underline;
+}
+
+/* ── Input overrides for auth pages ── */
+.auth-form .input-label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.auth-form .input {
+  padding: 12px 42px;
+  font-size: 14px;
+  border-radius: 10px;
+  border-color: var(--color-neutral-200);
+}
+
+.auth-form .input:focus {
+  border-color: var(--color-neutral-950);
+  box-shadow: 0 0 0 3px var(--color-neutral-100);
+}

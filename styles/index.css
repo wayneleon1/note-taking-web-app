@@ -1,0 +1,301 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Arial", sans-serif;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+:root {
+  /* ── Neutral ── */
+  --color-neutral-950: #0e1219;
+  --color-neutral-900: #191925;
+  --color-neutral-800: #232530;
+  --color-neutral-700: #2b3038;
+  --color-neutral-600: #525868;
+  --color-neutral-500: #717784;
+  --color-neutral-400: #99a0ae;
+  --color-neutral-300: #cacfd8;
+  --color-neutral-200: #e0e4ea;
+  --color-neutral-100: #f3f5f8;
+  --color-neutral-50: #f5f7fa;
+  --color-neutral-0: #ffffff;
+
+  /* ── Blue ── */
+  --color-blue-700: #2547d0;
+  --color-blue-500: #335cff;
+  --color-blue-50: #ebf1ff;
+
+  /* ── Green ── */
+  --color-green-500: #21c16b;
+  --color-green-100: #d1fbe9;
+
+  /* ── Red ── */
+  --color-red-500: #f93748;
+  --color-red-100: #ffd5d8;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    color 0.15s ease,
+    opacity 0.15s ease;
+  white-space: nowrap;
+  user-select: none;
+  outline: none;
+}
+
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* PRIMARY BUTTON */
+.btn-primary {
+  background-color: var(--color-blue-500);
+  color: var(--color-neutral-0);
+  border-color: var(--color-blue-500);
+}
+
+.btn-primary:hover {
+  background-color: var(--color-blue-700);
+  border-color: var(--color-blue-700);
+}
+
+.btn-primary:focus-visible {
+  background-color: var(--color-blue-500);
+  border-color: var(--color-blue-500);
+  box-shadow: 0 0 0 3px var(--color-blue-50);
+}
+
+.btn-primary:disabled,
+.btn-primary[aria-disabled="true"] {
+  background-color: var(--color-neutral-200);
+  border-color: var(--color-neutral-200);
+  color: var(--color-neutral-400);
+}
+
+/* SECONDARY BUTTON */
+
+.btn-secondary {
+  background-color: var(--color-neutral-100);
+  color: var(--color-neutral-800);
+  border-color: var(--color-neutral-100);
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-neutral-200);
+  border-color: var(--color-neutral-200);
+}
+
+.btn-secondary:focus-visible {
+  background-color: var(--color-neutral-100);
+  border-color: var(--color-neutral-800);
+  box-shadow: 0 0 0 3px var(--color-neutral-200);
+}
+
+.btn-secondary:disabled,
+.btn-secondary[aria-disabled="true"] {
+  background-color: var(--color-neutral-100);
+  border-color: var(--color-neutral-100);
+  color: var(--color-neutral-400);
+}
+
+/* BORDER BUTTON */
+
+.btn-border {
+  background-color: var(--color-neutral-0);
+  color: var(--color-neutral-800);
+  border-color: var(--color-neutral-300);
+}
+
+.btn-border:hover {
+  background-color: var(--color-neutral-50);
+  border-color: var(--color-neutral-400);
+}
+
+.btn-border:focus-visible {
+  background-color: var(--color-neutral-0);
+  border-color: var(--color-neutral-800);
+  box-shadow: 0 0 0 3px var(--color-neutral-200);
+}
+
+.btn-border:disabled,
+.btn-border[aria-disabled="true"] {
+  background-color: var(--color-neutral-50);
+  border-color: var(--color-neutral-200);
+  color: var(--color-neutral-400);
+}
+
+/* ── Button icon ── */
+.btn .btn-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   INPUT FIELD
+   Structure:
+     <div class="input-group">
+       <label class="input-label">Label</label>
+       <div class="input-wrapper">
+         <span class="input-icon input-icon--left">…</span>
+         <input class="input" … />
+         <span class="input-icon input-icon--right">…</span>
+       </div>
+       <p class="input-hint">Hint text</p>
+     </div>
+   ============================================================ */
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ── Label ── */
+.input-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-neutral-800);
+  line-height: 1.4;
+}
+
+/* ── Wrapper holds icon(s) + the <input> ── */
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* ── Icons inside input ── */
+.input-icon {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  color: var(--color-neutral-500);
+  pointer-events: none;
+}
+
+.input-icon--left {
+  left: 12px;
+}
+.input-icon--right {
+  right: 12px;
+}
+
+/* ── Core input ── */
+.input {
+  width: 100%;
+  padding: 10px 40px;
+  border-radius: 8px;
+  border: 1.5px solid var(--color-neutral-300);
+  background-color: var(--color-neutral-0);
+  color: var(--color-neutral-950);
+  font-size: 14px;
+  line-height: 1.5;
+  outline: none;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.input::placeholder {
+  color: var(--color-neutral-400);
+}
+
+/* No left icon — remove left padding */
+.input-wrapper:not(:has(.input-icon--left)) .input {
+  padding-left: 14px;
+}
+
+/* No right icon — remove right padding */
+.input-wrapper:not(:has(.input-icon--right)) .input {
+  padding-right: 14px;
+}
+
+/* ── Hover state ── */
+.input:hover:not(:disabled) {
+  background-color: var(--color-neutral-50);
+  border-color: var(--color-neutral-300);
+}
+
+/* ── Focus state ── */
+.input:focus {
+  border-color: var(--color-neutral-950);
+  background-color: var(--color-neutral-0);
+  box-shadow: 0 0 0 3px var(--color-neutral-200);
+}
+
+/* ── Disabled state ── */
+.input:disabled {
+  background-color: var(--color-neutral-100);
+  border-color: var(--color-neutral-200);
+  color: var(--color-neutral-400);
+  cursor: not-allowed;
+}
+
+.input:disabled::placeholder {
+  color: var(--color-neutral-300);
+}
+
+.input-group:has(.input:disabled) .input-label,
+.input-group:has(.input:disabled) .input-hint,
+.input-group:has(.input:disabled) .input-icon {
+  color: var(--color-neutral-400);
+}
+
+/* ── Hint text ── */
+.input-hint {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: var(--color-neutral-500);
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* ERROR STATE — add .input-group--error */
+.input-group--error .input {
+  border-color: var(--color-red-500);
+  background-color: var(--color-neutral-0);
+}
+
+.input-group--error .input:focus {
+  border-color: var(--color-red-500);
+  box-shadow: 0 0 0 3px var(--color-red-100);
+}
+
+.input-group--error .input-hint {
+  color: var(--color-red-500);
+}
+
+.input-group--error .input-icon {
+  color: var(--color-red-500);
+}
