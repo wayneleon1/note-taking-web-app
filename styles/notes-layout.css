@@ -8,7 +8,7 @@ body {
 }
 
 /* ─────────────────────────────────────────
-   SHARED: LOGO
+   LOGO
 ───────────────────────────────────────── */
 .logo {
   display: flex;
@@ -17,9 +17,13 @@ body {
   text-decoration: none;
   flex-shrink: 0;
 }
+.logo img {
+  height: 28px;
+  width: auto;
+}
 
 /* ─────────────────────────────────────────
-   SHARED: TAG BADGE
+   TAG BADGE
 ───────────────────────────────────────── */
 .tag-badge {
   display: inline-flex;
@@ -35,25 +39,28 @@ body {
 }
 
 /* ─────────────────────────────────────────
-   SHARED: NOTE CARD
+   NOTE CARD  (shared desktop + tablet)
 ───────────────────────────────────────── */
 .note-card {
-  padding: 14px 12px;
+  padding: 14px 0;
   border-bottom: 1px solid var(--color-neutral-200);
   cursor: pointer;
-  border-radius: 8px;
   transition: background-color 0.12s ease;
 }
 .note-card:last-child {
   border-bottom: none;
 }
-.note-card:hover {
+.note-card-inner {
+  padding: 0 12px;
+  border-radius: 8px;
+  transition: background-color 0.12s ease;
+}
+.note-card:hover .note-card-inner {
   background: var(--color-neutral-50);
 }
-.note-card.active {
+.note-card.active .note-card-inner {
   background: var(--color-neutral-100);
 }
-
 .note-card-title {
   font-size: 15px;
   font-weight: 700;
@@ -73,7 +80,29 @@ body {
 }
 
 /* ─────────────────────────────────────────
-   SHARED: ICON BUTTON
+   EMPTY / INFO STATES
+───────────────────────────────────────── */
+.notes-empty-state {
+  padding: 20px 0;
+}
+.notes-empty-state p {
+  font-size: 14px;
+  color: var(--color-neutral-600);
+  line-height: 1.6;
+}
+.detail-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: var(--color-neutral-400);
+  font-size: 14px;
+  text-align: center;
+}
+
+/* ─────────────────────────────────────────
+   ICON BUTTON
 ───────────────────────────────────────── */
 .icon-btn {
   display: inline-flex;
@@ -82,15 +111,12 @@ body {
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--color-neutral-500);
   padding: 6px;
   border-radius: 8px;
-  transition:
-    color 0.12s ease,
-    background-color 0.12s ease;
+  transition: background-color 0.12s ease;
+  flex-shrink: 0;
 }
 .icon-btn:hover {
-  color: var(--color-neutral-950);
   background-color: var(--color-neutral-100);
 }
 .icon-btn img {
@@ -100,7 +126,7 @@ body {
 }
 
 /* ─────────────────────────────────────────
-   SHARED: ACTION CARD (Archive / Delete)
+   ACTION CARD  (Desktop: Archive / Delete / Restore)
 ───────────────────────────────────────── */
 .action-card {
   display: flex;
@@ -119,7 +145,7 @@ body {
     background-color 0.12s ease;
   text-align: left;
   width: 100%;
-  font-family: "Manrope", sans-serif;
+  font-family: "Manrope", "Arial", sans-serif;
 }
 .action-card:hover {
   border-color: var(--color-neutral-300);
@@ -130,9 +156,16 @@ body {
   height: 18px;
   flex-shrink: 0;
 }
+.action-card--danger {
+  color: var(--color-red-500);
+}
+.action-card--danger:hover {
+  background-color: var(--color-red-100);
+  border-color: var(--color-red-500);
+}
 
 /* ─────────────────────────────────────────
-   SHARED: CREATE BUTTON
+   CREATE BUTTON (Desktop notes-panel-header)
 ───────────────────────────────────────── */
 .btn-create {
   display: flex;
@@ -144,7 +177,7 @@ body {
   border-radius: 8px;
   background-color: var(--color-blue-500);
   color: var(--color-neutral-0);
-  font-family: "Manrope", sans-serif;
+  font-family: "Manrope", "Arial", sans-serif;
   font-size: 14px;
   font-weight: 600;
   border: none;
@@ -158,6 +191,33 @@ body {
   width: 16px;
   height: 16px;
   filter: brightness(0) invert(1);
+}
+
+/* ─────────────────────────────────────────
+   TAGS INPUT
+───────────────────────────────────────── */
+.tags-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: "Manrope", "Arial", sans-serif;
+  font-size: 14px;
+  color: var(--color-neutral-800);
+  font-weight: 500;
+  width: 100%;
+  padding: 0;
+}
+.tags-input::placeholder {
+  color: var(--color-neutral-400);
+  font-weight: 400;
+}
+
+/* ─────────────────────────────────────────
+   PANEL PAGE HEADER (tablet: big title inside panel)
+   Hidden on desktop
+───────────────────────────────────────── */
+.panel-page-header {
+  display: none;
 }
 
 /* ══════════════════════════════════════════
@@ -181,17 +241,14 @@ body {
   padding: 20px 16px;
   gap: 24px;
 }
-
 .sidebar-logo {
   padding: 4px 8px;
 }
-
 .sidebar-nav {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
-
 .sidebar-nav-item {
   display: flex;
   align-items: center;
@@ -212,10 +269,11 @@ body {
   align-items: center;
   gap: 10px;
 }
-.sidebar-nav-item img.nav-icon {
+.sidebar-nav-item .nav-icon {
   width: 18px;
   height: 18px;
   opacity: 0.6;
+  flex-shrink: 0;
 }
 .sidebar-nav-item:hover {
   background-color: var(--color-neutral-100);
@@ -226,15 +284,19 @@ body {
   color: var(--color-neutral-950);
   font-weight: 600;
 }
-.sidebar-nav-item.active img.nav-icon {
+.sidebar-nav-item.active .nav-icon {
   opacity: 1;
 }
-.sidebar-nav-item img.nav-chevron {
+.sidebar-nav-item .nav-chevron {
   width: 16px;
   height: 16px;
   opacity: 0.35;
+  flex-shrink: 0;
 }
-
+.sidebar-tags-section {
+  flex: 1;
+  min-height: 0;
+}
 .sidebar-section-title {
   font-size: 11px;
   font-weight: 700;
@@ -270,9 +332,8 @@ body {
   gap: 16px;
 }
 .topbar-logo {
-  display: none;
-} /* hidden on desktop, shown on mobile/tablet */
-
+  display: none; /* hidden on desktop */
+}
 .topbar-title {
   font-size: 20px;
   font-weight: 700;
@@ -280,7 +341,6 @@ body {
   white-space: nowrap;
   flex: 1;
 }
-
 .topbar-search {
   display: flex;
   align-items: center;
@@ -308,7 +368,7 @@ body {
   border: none;
   outline: none;
   background: transparent;
-  font-family: "Manrope", sans-serif;
+  font-family: "Manrope", "Arial", sans-serif;
   font-size: 14px;
   color: var(--color-neutral-950);
   width: 100%;
@@ -357,6 +417,8 @@ body {
   flex: 1;
   overflow-y: auto;
   padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
 }
 .detail-title {
   font-size: 26px;
@@ -367,9 +429,13 @@ body {
   border: none;
   outline: none;
   width: 100%;
-  font-family: "Manrope", sans-serif;
+  font-family: "Manrope", "Arial", sans-serif;
   background: transparent;
-  resize: none;
+  padding: 0;
+}
+.detail-title::placeholder {
+  color: var(--color-neutral-300);
+  font-weight: 400;
 }
 .detail-meta {
   display: flex;
@@ -404,6 +470,7 @@ body {
   flex-wrap: wrap;
   gap: 6px;
   align-items: center;
+  flex: 1;
 }
 .detail-content {
   font-size: 14px;
@@ -414,9 +481,14 @@ body {
   outline: none;
   width: 100%;
   background: transparent;
-  font-family: "Manrope", sans-serif;
+  font-family: "Manrope", "Arial", sans-serif;
   resize: none;
   min-height: 200px;
+  flex: 1;
+  padding: 0;
+}
+.detail-content::placeholder {
+  color: var(--color-neutral-300);
 }
 .detail-footer {
   padding: 14px 32px;
@@ -440,31 +512,12 @@ body {
   overflow-y: auto;
 }
 
-/* Empty state */
-.empty-detail {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  color: var(--color-neutral-400);
-  font-size: 14px;
-  text-align: center;
-  padding: 40px;
-}
-.empty-detail img {
-  width: 48px;
-  height: 48px;
-  opacity: 0.25;
-}
-
-/* Mobile detail bar (hidden on desktop) */
+/* Mobile detail bar hidden on desktop */
 .mobile-detail-bar {
   display: none;
 }
 
-/* Bottom nav + FAB (hidden on desktop) */
+/* Bottom nav + FAB hidden on desktop */
 .bottom-nav {
   display: none;
 }
@@ -472,8 +525,59 @@ body {
   display: none;
 }
 
+/* ─────────────────────────────────────────
+   DELETE CONFIRMATION MODAL
+───────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+}
+.modal {
+  background: var(--color-neutral-0);
+  border-radius: 14px;
+  padding: 28px 28px 24px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
+}
+.modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-neutral-950);
+  margin-bottom: 10px;
+}
+.modal-message {
+  font-size: 14px;
+  color: var(--color-neutral-600);
+  line-height: 1.6;
+  margin-bottom: 22px;
+}
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+.btn-danger {
+  background-color: var(--color-red-500);
+  color: var(--color-neutral-0);
+  border-color: var(--color-red-500);
+}
+.btn-danger:hover {
+  background-color: #d4192a;
+  border-color: #d4192a;
+}
+
 /* ══════════════════════════════════════════
    TABLET  768px – 1023px
+   Layout: logo-only topbar → full-width list with
+   large in-panel heading → FAB → bottom nav with labels
+   Detail: full-screen overlay from below topbar
 ══════════════════════════════════════════ */
 @media (max-width: 1023px) {
   .app-shell {
@@ -481,36 +585,41 @@ body {
     height: 100dvh;
   }
 
-  /* Hide desktop sidebar, detail, actions */
+  /* ── Hide desktop-only elements ── */
   .sidebar {
     display: none;
   }
   .detail-panel {
     display: none;
-  }
+  } /* shown via .mobile-visible */
   .actions-panel {
     display: none;
   }
   .topbar-title {
     display: none;
   }
+  .topbar-search {
+    display: none;
+  }
+  .topbar-settings {
+    display: none;
+  }
+  .notes-panel-header {
+    display: none;
+  } /* FAB replaces Create button */
 
-  /* Show logo in top bar */
+  /* ── Topbar: logo only ── */
   .topbar-logo {
     display: flex;
   }
-
   .topbar {
     padding: 0 20px;
-    height: 60px;
+    height: 64px;
     gap: 12px;
-  }
-  .topbar-search {
-    width: auto;
-    flex: 1;
+    border-bottom: 1px solid var(--color-neutral-200);
   }
 
-  /* Full-width list */
+  /* ── Full-width notes panel ── */
   .content-row {
     flex-direction: column;
     flex: 1;
@@ -520,22 +629,68 @@ body {
     width: 100%;
     border-right: none;
     flex: 1;
-  }
-  .notes-list {
-    padding: 4px 12px 100px;
-  }
-  .notes-panel-header {
-    padding: 14px 20px 10px;
+    overflow: hidden;
   }
 
-  /* Bottom navigation */
+  /* ── In-panel page header (big title + subtitle) ── */
+  .panel-page-header {
+    display: block;
+    padding: 28px 20px 16px;
+    flex-shrink: 0;
+  }
+  .panel-page-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--color-neutral-950);
+    line-height: 1.2;
+    margin-bottom: 0;
+  }
+  .panel-page-subtitle {
+    font-size: 14px;
+    color: var(--color-neutral-500);
+    margin-top: 8px;
+    line-height: 1.55;
+  }
+
+  /* ── Notes list: full width, no horizontal padding ── */
+  .notes-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 20px 100px;
+  }
+
+  /* ── Note cards: full width, clean dividers ── */
+  .note-card {
+    padding: 16px 0;
+    border-radius: 0;
+  }
+  .note-card-inner {
+    padding: 0;
+    border-radius: 0;
+    background: transparent !important; /* no hover bg on tablet */
+  }
+  .note-card-title {
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+  .note-card-tags {
+    margin-bottom: 8px;
+  }
+
+  /* ── Tag badges on tablet: slightly less padding ── */
+  .tag-badge {
+    padding: 2px 8px;
+    font-size: 12px;
+  }
+
+  /* ── Bottom navigation ── */
   .bottom-nav {
     display: flex;
     align-items: center;
     justify-content: space-around;
     background: var(--color-neutral-0);
     border-top: 1px solid var(--color-neutral-200);
-    padding: 8px 0 14px;
+    padding: 10px 0 16px;
     flex-shrink: 0;
     z-index: 10;
   }
@@ -543,15 +698,14 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 3px;
-    padding: 6px 14px;
+    gap: 4px;
+    padding: 6px 16px;
     border-radius: 10px;
     cursor: pointer;
-    text-decoration: none;
     color: var(--color-neutral-500);
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 500;
-    font-family: "Manrope", sans-serif;
+    font-family: "Manrope", "Arial", sans-serif;
     background: none;
     border: none;
     transition:
@@ -563,24 +717,28 @@ body {
     height: 22px;
     opacity: 0.5;
   }
+  .bottom-nav-item span {
+    display: block; /* labels visible on tablet */
+  }
   .bottom-nav-item.active {
     color: var(--color-neutral-950);
     background-color: var(--color-neutral-100);
+    border-radius: 8px;
   }
   .bottom-nav-item.active img {
     opacity: 1;
   }
 
-  /* Floating action button */
+  /* ── FAB ── */
   .fab {
     display: flex;
     align-items: center;
     justify-content: center;
     position: fixed;
-    bottom: 80px;
+    bottom: 90px;
     right: 20px;
-    width: 54px;
-    height: 54px;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
     background: var(--color-blue-500);
     color: var(--color-neutral-0);
@@ -602,20 +760,24 @@ body {
     filter: brightness(0) invert(1);
   }
 
-  /* Detail panel overlay: sits BELOW topbar and ABOVE bottom-nav */
+  /* ══════════════════════════════════════
+     DETAIL PANEL OVERLAY (tablet)
+     Sits below topbar (64px), above bottom-nav (~78px)
+  ══════════════════════════════════════ */
   .detail-panel.mobile-visible {
     display: flex;
+    flex-direction: column;
     position: fixed;
-    top: 60px; /* below tablet topbar */
+    top: 64px;
     left: 0;
     right: 0;
-    bottom: 72px; /* above tablet bottom nav */
+    bottom: 78px;
     z-index: 30;
     background: var(--color-neutral-0);
     overflow: hidden;
   }
 
-  /* Actions bar inside tablet detail */
+  /* ── Tablet detail action bar ── */
   .detail-panel.mobile-visible .mobile-detail-bar {
     display: flex;
     align-items: center;
@@ -625,16 +787,78 @@ body {
     border-bottom: 1px solid var(--color-neutral-200);
     flex-shrink: 0;
     background: var(--color-neutral-0);
-    gap: 8px;
+    gap: 6px;
   }
 
+  /* Go Back button */
+  .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    color: var(--color-neutral-700);
+    font-family: "Manrope", "Arial", sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 4px 0;
+    flex-shrink: 0;
+  }
+  .back-btn img {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Right side actions */
+  .mobile-bar-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .mobile-cancel-btn {
+    background: none;
+    border: none;
+    font-family: "Manrope", "Arial", sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-neutral-600);
+    cursor: pointer;
+    padding: 4px 8px;
+    white-space: nowrap;
+  }
+  .mobile-save-btn {
+    background: none;
+    border: none;
+    font-family: "Manrope", "Arial", sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-blue-500);
+    cursor: pointer;
+    padding: 4px 8px;
+    white-space: nowrap;
+  }
+  .mobile-save-btn:hover {
+    color: var(--color-blue-700);
+  }
+
+  /* ── Detail body & fields ── */
   .detail-panel.mobile-visible .detail-body {
-    padding: 24px 28px;
+    padding: 28px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow-y: auto;
   }
   .detail-panel.mobile-visible .detail-title {
-    font-size: 24px;
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 20px;
   }
   .detail-panel.mobile-visible .detail-footer {
+    display: none; /* Footer is the mobile-detail-bar on tablet */
+  }
+  .detail-panel.mobile-visible .detail-empty {
     display: none;
   }
 }
@@ -643,7 +867,13 @@ body {
    MOBILE  < 768px
 ══════════════════════════════════════════ */
 @media (max-width: 767px) {
-  /* ── Topbar: logo only, no search, no settings ── */
+  /* ── App shell ── */
+  .app-shell {
+    flex-direction: column;
+    height: 100dvh;
+  }
+
+  /* ── Topbar ── */
   .topbar {
     padding: 0 16px;
     height: 56px;
@@ -655,29 +885,52 @@ body {
     display: none;
   }
 
-  /* ── List view ── */
-  .notes-list {
-    padding: 4px 8px 90px;
+  /* ── Panel page header ── */
+  .panel-page-header {
+    display: block;
+    padding: 20px 16px 12px;
   }
-  .notes-panel-header {
-    padding: 12px 16px 8px;
+  .panel-page-title {
+    font-size: 22px;
   }
 
-  /* ── Bottom nav: icons only — hide labels ── */
+  /* ── Notes list ── */
+  .notes-list {
+    padding: 0 16px 90px;
+  }
+
+  /* ── Bottom nav: must be display:flex (re-assert from desktop none) ── */
   .bottom-nav {
-    padding: 12px 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    background: var(--color-neutral-0);
+    border-top: 1px solid var(--color-neutral-200);
+    padding: 10px 0 16px;
+    flex-shrink: 0;
+    z-index: 10;
   }
   .bottom-nav-item {
-    padding: 6px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 6px 10px;
     gap: 0;
-    font-size: 0; /* hides label text */
-    color: transparent; /* just in case */
+    border-radius: 8px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-family: "Manrope", "Arial", sans-serif;
+    transition: background-color 0.12s;
+  }
+  .bottom-nav-item span {
+    display: none; /* icons only on mobile */
   }
   .bottom-nav-item img {
     width: 24px;
     height: 24px;
+    opacity: 0.5;
   }
-  /* Remove background highlight on active for mobile (just icon changes opacity) */
   .bottom-nav-item.active {
     background-color: transparent;
   }
@@ -685,24 +938,65 @@ body {
     opacity: 1;
   }
 
-  /* ── FAB sits higher to clear icon-only nav ── */
+  /* ── FAB ── */
   .fab {
-    bottom: 76px;
+    display: flex;
+    bottom: 72px;
   }
 
-  /* ── Detail overlay: sits BELOW topbar and ABOVE bottom-nav ── */
+  /* ── Hide desktop-only elements ── */
+  .sidebar {
+    display: none;
+  }
+  .detail-panel {
+    display: none;
+  }
+  .actions-panel {
+    display: none;
+  }
+  .topbar-title {
+    display: none;
+  }
+  .notes-panel-header {
+    display: none;
+  }
+
+  /* ── Full-width notes panel ── */
+  .content-row {
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+  }
+  .notes-panel {
+    width: 100%;
+    border-right: none;
+    flex: 1;
+  }
+
+  /* ── Note cards: flat style ── */
+  .note-card {
+    padding: 16px 0;
+    border-radius: 0;
+  }
+  .note-card-inner {
+    padding: 0;
+    border-radius: 0;
+    background: transparent !important;
+  }
+
+  /* ── Detail overlay ── */
   .detail-panel.mobile-visible {
+    display: flex;
+    flex-direction: column;
     position: fixed;
-    top: 56px; /* below the logo topbar */
+    top: 56px;
     left: 0;
     right: 0;
-    bottom: 65px; /* above the bottom nav */
+    bottom: 64px;
     z-index: 30;
     background: var(--color-neutral-0);
     overflow: hidden;
   }
-
-  /* ── Actions bar inside detail (Go Back + icons + Cancel + Save Note) ── */
   .detail-panel.mobile-visible .mobile-detail-bar {
     display: flex;
     align-items: center;
@@ -711,64 +1005,23 @@ body {
     height: 52px;
     border-bottom: 1px solid var(--color-neutral-200);
     flex-shrink: 0;
-    gap: 8px;
     background: var(--color-neutral-0);
+    gap: 6px;
   }
-
-  .back-btn {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    background: none;
-    border: none;
-    color: var(--color-neutral-700);
-    font-family: "Manrope", sans-serif;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    padding: 4px 0;
-  }
-  .back-btn img {
-    width: 16px;
-    height: 16px;
-  }
-
-  .mobile-bar-actions {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-  }
-  .mobile-save-btn {
-    background: none;
-    border: none;
-    font-family: "Manrope", sans-serif;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--color-blue-500);
-    cursor: pointer;
-    padding: 4px 8px;
-  }
-  .mobile-cancel-btn {
-    background: none;
-    border: none;
-    font-family: "Manrope", sans-serif;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--color-neutral-600);
-    cursor: pointer;
-    padding: 4px 8px;
-  }
-
-  /* ── Detail body and title ── */
-  .detail-body {
+  .detail-panel.mobile-visible .detail-body {
     padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow-y: auto;
   }
-  .detail-title {
+  .detail-panel.mobile-visible .detail-title {
     font-size: 22px;
   }
-
-  /* Desktop Save/Cancel footer hidden — handled by mobile-detail-bar ── */
-  .detail-footer {
+  .detail-panel.mobile-visible .detail-footer {
+    display: none;
+  }
+  .detail-panel.mobile-visible .detail-empty {
     display: none;
   }
 }
