@@ -60,9 +60,7 @@
         <!-- Tags -->
         <div class="sidebar-tags-section">
           <p class="sidebar-section-title">Tags</p>
-          <nav class="sidebar-tags" id="sidebar-tags" aria-label="Tags">
-            <!-- Dynamically populated -->
-          </nav>
+          <nav class="sidebar-tags" id="sidebar-tags" aria-label="Tags"></nav>
         </div>
       </aside>
       <!-- /sidebar -->
@@ -73,15 +71,10 @@
       <div class="main-area">
         <!-- ── Top bar ── -->
         <header class="topbar">
-          <!-- Logo: hidden on desktop, shown on tablet + mobile -->
           <a href="#" class="logo topbar-logo" aria-label="Notes home">
             <img src="./assets/images/logo.svg" alt="Notes logo" />
           </a>
-
-          <!-- Page title: desktop only -->
           <h1 class="topbar-title" id="topbar-title">All Notes</h1>
-
-          <!-- Search: desktop + tablet -->
           <div class="topbar-search" role="search">
             <img src="./assets/images/icon-search.svg" alt="" />
             <input
@@ -91,25 +84,27 @@
               aria-label="Search notes"
             />
           </div>
-
-          <!-- Settings: desktop only -->
-          <button class="icon-btn topbar-settings" aria-label="Settings">
+          <button
+            class="icon-btn topbar-settings"
+            id="btn-open-settings"
+            aria-label="Settings"
+          >
             <img src="./assets/images/icon-settings.svg" alt="" />
           </button>
         </header>
 
-        <!-- ── Three-pane content row ── -->
-        <div class="content-row">
+        <!-- ══════════════════════════════════════
+             NOTES VIEW  (default)
+        ══════════════════════════════════════ -->
+        <div class="content-row" id="notes-view">
           <!-- Notes list panel -->
           <section class="notes-panel" aria-label="Notes list">
-            <!-- Desktop only: Create New Note button -->
             <div class="notes-panel-header">
               <button class="btn-create" id="btn-create-note">
+                <img src="./assets/images/icon-plus.svg" alt="" />
                 + Create New Note
               </button>
             </div>
-
-            <!-- Tablet only: large page heading inside the panel -->
             <div class="panel-page-header" id="panel-page-header">
               <h1 class="panel-page-title" id="panel-page-title">All Notes</h1>
               <p
@@ -121,20 +116,15 @@
                 delete them anytime.
               </p>
             </div>
-
-            <div class="notes-list" role="list" id="notes-list">
-              <!-- Dynamically rendered note cards -->
-            </div>
+            <div class="notes-list" role="list" id="notes-list"></div>
           </section>
-          <!-- /notes-panel -->
 
-          <!-- ── Note detail panel ── -->
+          <!-- Note detail panel -->
           <section
             class="detail-panel"
             id="detail-panel"
             aria-label="Note detail"
           >
-            <!-- Tablet / mobile action bar -->
             <div class="mobile-detail-bar" id="mobile-detail-bar">
               <button class="back-btn" id="btn-back" aria-label="Go back">
                 <img src="./assets/images/icon-arrow-left.svg" alt="" />
@@ -166,12 +156,10 @@
               </div>
             </div>
 
-            <!-- Empty state (desktop) -->
             <div class="detail-empty" id="detail-empty">
               <p>Select a note to view or create a new one.</p>
             </div>
 
-            <!-- Detail body -->
             <div class="detail-body" id="detail-body" style="display: none">
               <input
                 class="detail-title"
@@ -180,7 +168,6 @@
                 placeholder="Enter a title..."
                 aria-label="Note title"
               />
-
               <div class="detail-meta">
                 <div class="detail-meta-row">
                   <img
@@ -222,7 +209,6 @@
                   <span class="meta-value" id="detail-date">Not yet saved</span>
                 </div>
               </div>
-
               <textarea
                 class="detail-content"
                 id="detail-content"
@@ -230,9 +216,7 @@
                 placeholder="Start typing your note here..."
               ></textarea>
             </div>
-            <!-- /detail-body -->
 
-            <!-- Desktop footer -->
             <div class="detail-footer" id="detail-footer" style="display: none">
               <button class="btn btn-primary" id="btn-save-note">
                 Save Note
@@ -240,26 +224,352 @@
               <button class="btn btn-secondary" id="btn-cancel">Cancel</button>
             </div>
           </section>
-          <!-- /detail-panel -->
 
-          <!-- ── Right actions panel (desktop only) ── -->
+          <!-- Right actions panel (desktop) -->
           <aside
             class="actions-panel"
             id="actions-panel"
             aria-label="Note actions"
-          >
-            <!-- Dynamically populated -->
-          </aside>
+          ></aside>
         </div>
-        <!-- /content-row -->
+        <!-- /notes-view -->
+
+        <!-- ══════════════════════════════════════
+             SETTINGS VIEW
+        ══════════════════════════════════════ -->
+        <div class="settings-view" id="settings-view" style="display: none">
+          <!-- Settings sub-nav -->
+          <nav class="settings-nav" aria-label="Settings navigation">
+            <a
+              href="#"
+              class="settings-nav-item active"
+              data-setting="color-theme"
+            >
+              <span class="settings-nav-left">
+                <img
+                  src="./assets/images/icon-sun.svg"
+                  alt=""
+                  class="nav-icon"
+                />
+                Color Theme
+              </span>
+              <img
+                src="./assets/images/icon-chevron-right.svg"
+                alt=""
+                class="settings-nav-chevron active-only"
+              />
+            </a>
+            <a href="#" class="settings-nav-item" data-setting="font-theme">
+              <span class="settings-nav-left">
+                <img
+                  src="./assets/images/icon-font.svg"
+                  alt=""
+                  class="nav-icon"
+                />
+                Font Theme
+              </span>
+              <img
+                src="./assets/images/icon-chevron-right.svg"
+                alt=""
+                class="settings-nav-chevron active-only"
+              />
+            </a>
+            <a
+              href="#"
+              class="settings-nav-item"
+              data-setting="change-password"
+            >
+              <span class="settings-nav-left">
+                <img
+                  src="./assets/images/icon-lock.svg"
+                  alt=""
+                  class="nav-icon"
+                />
+                Change Password
+              </span>
+              <img
+                src="./assets/images/icon-chevron-right.svg"
+                alt=""
+                class="settings-nav-chevron active-only"
+              />
+            </a>
+            <div class="settings-nav-divider"></div>
+            <a
+              href="#"
+              class="settings-nav-item settings-nav-item--logout"
+              id="btn-logout"
+            >
+              <span class="settings-nav-left">
+                <img
+                  src="./assets/images/icon-logout.svg"
+                  alt=""
+                  class="nav-icon"
+                />
+                Logout
+              </span>
+            </a>
+          </nav>
+
+          <!-- Settings content panel -->
+          <div class="settings-content" id="settings-content">
+            <!-- ── Color Theme ── -->
+            <div class="settings-panel active" id="panel-color-theme">
+              <h2 class="settings-panel-title">Color Theme</h2>
+              <p class="settings-panel-subtitle">Choose your color theme:</p>
+              <div class="settings-options">
+                <label class="settings-option active" data-value="light">
+                  <div class="settings-option-icon">
+                    <img src="./assets/images/icon-sun.svg" alt="" />
+                  </div>
+                  <div class="settings-option-text">
+                    <span class="settings-option-name">Light Mode</span>
+                    <span class="settings-option-desc"
+                      >Pick a clean and classic light theme</span
+                    >
+                  </div>
+                  <input
+                    type="radio"
+                    name="color-theme"
+                    value="light"
+                    checked
+                  />
+                  <span class="settings-radio-dot"></span>
+                </label>
+
+                <label class="settings-option" data-value="dark">
+                  <div class="settings-option-icon">
+                    <img src="./assets/images/icon-moon.svg" alt="" />
+                  </div>
+                  <div class="settings-option-text">
+                    <span class="settings-option-name">Dark Mode</span>
+                    <span class="settings-option-desc"
+                      >Select a sleek and modern dark theme</span
+                    >
+                  </div>
+                  <input type="radio" name="color-theme" value="dark" />
+                  <span class="settings-radio-dot"></span>
+                </label>
+
+                <label class="settings-option" data-value="system">
+                  <div class="settings-option-icon">
+                    <img src="./assets/images/icon-system-theme.svg" alt="" />
+                  </div>
+                  <div class="settings-option-text">
+                    <span class="settings-option-name">System</span>
+                    <span class="settings-option-desc"
+                      >Adapts to your device's theme</span
+                    >
+                  </div>
+                  <input type="radio" name="color-theme" value="system" />
+                  <span class="settings-radio-dot"></span>
+                </label>
+              </div>
+              <div class="settings-actions">
+                <button class="btn btn-primary" id="btn-apply-color">
+                  Apply Changes
+                </button>
+              </div>
+            </div>
+
+            <!-- ── Font Theme ── -->
+            <div class="settings-panel" id="panel-font-theme">
+              <h2 class="settings-panel-title">Font Theme</h2>
+              <p class="settings-panel-subtitle">Choose your font theme:</p>
+              <div class="settings-options">
+                <label class="settings-option active" data-value="sans-serif">
+                  <div class="settings-option-icon settings-option-icon--font">
+                    <span style="font-family: sans-serif">Aa</span>
+                  </div>
+                  <div class="settings-option-text">
+                    <span
+                      class="settings-option-name"
+                      style="font-family: sans-serif"
+                      >Sans-serif</span
+                    >
+                    <span class="settings-option-desc"
+                      >Clean and modern, easy to read.</span
+                    >
+                  </div>
+                  <input
+                    type="radio"
+                    name="font-theme"
+                    value="sans-serif"
+                    checked
+                  />
+                  <span class="settings-radio-dot"></span>
+                </label>
+
+                <label class="settings-option" data-value="serif">
+                  <div class="settings-option-icon settings-option-icon--font">
+                    <span style="font-family: Georgia, serif">Aa</span>
+                  </div>
+                  <div class="settings-option-text">
+                    <span
+                      class="settings-option-name"
+                      style="font-family: Georgia, serif"
+                      >Serif</span
+                    >
+                    <span class="settings-option-desc"
+                      >Classic and elegant for a timeless feel.</span
+                    >
+                  </div>
+                  <input type="radio" name="font-theme" value="serif" />
+                  <span class="settings-radio-dot"></span>
+                </label>
+
+                <label class="settings-option" data-value="monospace">
+                  <div class="settings-option-icon settings-option-icon--font">
+                    <span
+                      style="font-family: &quot;Courier New&quot;, monospace"
+                      >Aa</span
+                    >
+                  </div>
+                  <div class="settings-option-text">
+                    <span
+                      class="settings-option-name"
+                      style="font-family: &quot;Courier New&quot;, monospace"
+                      >Monospace</span
+                    >
+                    <span class="settings-option-desc"
+                      >Code-like, great for a technical vibe.</span
+                    >
+                  </div>
+                  <input type="radio" name="font-theme" value="monospace" />
+                  <span class="settings-radio-dot"></span>
+                </label>
+              </div>
+              <div class="settings-actions">
+                <button class="btn btn-primary" id="btn-apply-font">
+                  Apply Changes
+                </button>
+              </div>
+            </div>
+
+            <!-- ── Change Password ── -->
+            <div class="settings-panel" id="panel-change-password">
+              <h2 class="settings-panel-title">Change Password</h2>
+
+              <div class="settings-form">
+                <div class="settings-field">
+                  <label class="settings-field-label" for="pw-old"
+                    >Old Password</label
+                  >
+                  <div class="settings-field-input-wrap">
+                    <input
+                      class="settings-field-input"
+                      type="password"
+                      id="pw-old"
+                      placeholder=""
+                      autocomplete="current-password"
+                    />
+                    <button
+                      class="pw-toggle"
+                      type="button"
+                      aria-label="Show/hide password"
+                      data-target="pw-old"
+                    >
+                      <img
+                        src="./assets/images/icon-show-password.svg"
+                        alt=""
+                        class="pw-eye-show"
+                      />
+                      <img
+                        src="./assets/images/icon-hide-password.svg"
+                        alt=""
+                        class="pw-eye-hide"
+                        style="display: none"
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                <div class="settings-field">
+                  <label class="settings-field-label" for="pw-new"
+                    >New Password</label
+                  >
+                  <div class="settings-field-input-wrap">
+                    <input
+                      class="settings-field-input"
+                      type="password"
+                      id="pw-new"
+                      placeholder=""
+                      autocomplete="new-password"
+                    />
+                    <button
+                      class="pw-toggle"
+                      type="button"
+                      aria-label="Show/hide password"
+                      data-target="pw-new"
+                    >
+                      <img
+                        src="./assets/images/icon-show-password.svg"
+                        alt=""
+                        class="pw-eye-show"
+                      />
+                      <img
+                        src="./assets/images/icon-hide-password.svg"
+                        alt=""
+                        class="pw-eye-hide"
+                        style="display: none"
+                      />
+                    </button>
+                  </div>
+                  <p class="settings-field-hint">
+                    <img src="./assets/images/icon-info.svg" alt="" />
+                    At least 8 characters
+                  </p>
+                </div>
+
+                <div class="settings-field">
+                  <label class="settings-field-label" for="pw-confirm"
+                    >Confirm New Password</label
+                  >
+                  <div class="settings-field-input-wrap">
+                    <input
+                      class="settings-field-input"
+                      type="password"
+                      id="pw-confirm"
+                      placeholder=""
+                      autocomplete="new-password"
+                    />
+                    <button
+                      class="pw-toggle"
+                      type="button"
+                      aria-label="Show/hide password"
+                      data-target="pw-confirm"
+                    >
+                      <img
+                        src="./assets/images/icon-show-password.svg"
+                        alt=""
+                        class="pw-eye-show"
+                      />
+                      <img
+                        src="./assets/images/icon-hide-password.svg"
+                        alt=""
+                        class="pw-eye-hide"
+                        style="display: none"
+                      />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="settings-actions">
+                <button class="btn btn-primary" id="btn-save-password">
+                  Save Password
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- /settings-content -->
+        </div>
+        <!-- /settings-view -->
       </div>
       <!-- /main-area -->
     </div>
     <!-- /app-shell -->
 
-    <!-- ══════════════════════════════════════
-         BOTTOM NAV  (tablet + mobile)
-    ══════════════════════════════════════ -->
+    <!-- BOTTOM NAV (tablet + mobile) -->
     <nav class="bottom-nav" aria-label="Bottom navigation">
       <button class="bottom-nav-item active" data-view="all">
         <img src="./assets/images/icon-home.svg" alt="" />
@@ -307,6 +617,9 @@
         </div>
       </div>
     </div>
+
+    <!-- Toast notification -->
+    <div class="toast" id="toast" aria-live="polite"></div>
 
     <script src="script.js"></script>
   </body>

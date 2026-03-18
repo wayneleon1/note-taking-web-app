@@ -867,10 +867,22 @@ body {
    MOBILE  < 768px
 ══════════════════════════════════════════ */
 @media (max-width: 767px) {
-  /* ── App shell ── */
-  .app-shell {
+  /* Body becomes a flex column so .bottom-nav (sibling of .app-shell)
+     is rendered below it and not clipped by overflow:hidden */
+  body {
+    display: flex;
     flex-direction: column;
     height: 100dvh;
+    overflow: hidden;
+  }
+
+  /* App shell fills remaining space above the bottom nav */
+  .app-shell {
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    height: auto;
+    overflow: hidden;
   }
 
   /* ── Topbar ── */
@@ -989,10 +1001,10 @@ body {
     display: flex;
     flex-direction: column;
     position: fixed;
-    top: 56px;
+    top: 56px; /* below topbar */
     left: 0;
     right: 0;
-    bottom: 64px;
+    bottom: 62px; /* above bottom nav (~62px tall on mobile) */
     z-index: 30;
     background: var(--color-neutral-0);
     overflow: hidden;
@@ -1041,4 +1053,414 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-neutral-300);
+}
+
+/* ══════════════════════════════════════════
+   SETTINGS VIEW
+══════════════════════════════════════════ */
+
+/* Settings view takes the same space as content-row */
+.settings-view {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  background: var(--color-neutral-0);
+}
+
+/* ── Settings sub-nav (left panel, ~240px) ── */
+.settings-nav {
+  width: 240px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--color-neutral-200);
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+}
+
+.settings-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  color: var(--color-neutral-700);
+  font-size: 14px;
+  font-weight: 500;
+  transition:
+    background-color 0.12s ease,
+    color 0.12s ease;
+  font-family: "Manrope", "Arial", sans-serif;
+}
+.settings-nav-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.settings-nav-item .nav-icon {
+  width: 18px;
+  height: 18px;
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+.settings-nav-item:hover {
+  background-color: var(--color-neutral-100);
+  color: var(--color-neutral-950);
+}
+.settings-nav-item.active {
+  background-color: var(--color-neutral-100);
+  color: var(--color-neutral-950);
+  font-weight: 600;
+}
+.settings-nav-item.active .nav-icon {
+  opacity: 1;
+}
+
+.settings-nav-chevron {
+  width: 16px;
+  height: 16px;
+  opacity: 0.35;
+  flex-shrink: 0;
+}
+
+.settings-nav-divider {
+  height: 1px;
+  background: var(--color-neutral-200);
+  margin: 8px 12px;
+}
+
+.settings-nav-item--logout {
+  color: var(--color-red-500);
+  margin-top: 4px;
+}
+.settings-nav-item--logout:hover {
+  background-color: var(--color-red-100);
+  color: var(--color-red-500);
+}
+.settings-nav-item--logout .nav-icon {
+  opacity: 1;
+}
+
+/* ── Settings content (right area) ── */
+.settings-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px 40px;
+  background: var(--color-neutral-0);
+}
+
+/* ── Individual panel ── */
+.settings-panel {
+  display: none;
+  flex-direction: column;
+  gap: 0;
+  max-width: 520px;
+}
+.settings-panel.active {
+  display: flex;
+}
+
+.settings-panel-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-neutral-950);
+  margin-bottom: 6px;
+}
+.settings-panel-subtitle {
+  font-size: 14px;
+  color: var(--color-neutral-500);
+  margin-bottom: 24px;
+}
+
+/* ── Option list ── */
+.settings-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+/* ── Single option row ── */
+.settings-option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1.5px solid var(--color-neutral-200);
+  border-radius: 10px;
+  cursor: pointer;
+  transition:
+    border-color 0.12s ease,
+    background-color 0.12s ease;
+  background: var(--color-neutral-0);
+  user-select: none;
+}
+.settings-option:hover {
+  border-color: var(--color-neutral-300);
+  background: var(--color-neutral-50);
+}
+.settings-option.active {
+  border-color: var(--color-neutral-300);
+  background: var(--color-neutral-100);
+}
+
+/* Icon box */
+.settings-option-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  border: 1.5px solid var(--color-neutral-200);
+  background: var(--color-neutral-0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.settings-option-icon img {
+  width: 20px;
+  height: 20px;
+  opacity: 0.7;
+}
+.settings-option-icon--font span {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-neutral-700);
+}
+
+/* Text */
+.settings-option-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.settings-option-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-neutral-950);
+}
+.settings-option-desc {
+  font-size: 12px;
+  color: var(--color-neutral-500);
+}
+
+/* Radio — hide native, show custom dot */
+.settings-option input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.settings-radio-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--color-neutral-300);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.12s ease;
+}
+.settings-option.active .settings-radio-dot {
+  border-color: var(--color-blue-500);
+  background: var(--color-blue-500);
+  box-shadow: inset 0 0 0 3px var(--color-neutral-0);
+}
+
+/* ── Apply / Save button ── */
+.settings-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ── Change password form ── */
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.settings-field-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-neutral-800);
+}
+.settings-field-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.settings-field-input {
+  width: 100%;
+  padding: 10px 44px 10px 14px;
+  border: 1.5px solid var(--color-neutral-300);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: "Manrope", "Arial", sans-serif;
+  color: var(--color-neutral-950);
+  background: var(--color-neutral-0);
+  outline: none;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.settings-field-input:hover {
+  background: var(--color-neutral-50);
+}
+.settings-field-input:focus {
+  border-color: var(--color-neutral-950);
+  box-shadow: 0 0 0 3px var(--color-neutral-200);
+}
+.settings-field-input-wrap.input-error .settings-field-input {
+  border-color: var(--color-red-500);
+  box-shadow: 0 0 0 3px var(--color-red-100);
+}
+
+.pw-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  color: var(--color-neutral-400);
+}
+.pw-toggle img {
+  width: 18px;
+  height: 18px;
+  opacity: 0.55;
+  display: block;
+}
+.pw-toggle:hover img {
+  opacity: 0.9;
+}
+
+.settings-field-hint {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: var(--color-neutral-500);
+}
+.settings-field-hint img {
+  width: 14px;
+  height: 14px;
+  opacity: 0.5;
+}
+
+/* ── Toast notification ── */
+.toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--color-neutral-900);
+  color: var(--color-neutral-0);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: "Manrope", "Arial", sans-serif;
+  padding: 10px 20px;
+  border-radius: 8px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+  z-index: 200;
+}
+.toast--visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.toast--error {
+  background: var(--color-red-500);
+}
+
+/* ── Dark theme variables ── */
+[data-theme="dark"] {
+  --color-neutral-950: #f0f2f5;
+  --color-neutral-900: #e0e4ea;
+  --color-neutral-800: #cacfd8;
+  --color-neutral-700: #99a0ae;
+  --color-neutral-600: #717784;
+  --color-neutral-500: #525868;
+  --color-neutral-400: #2b3038;
+  --color-neutral-300: #232530;
+  --color-neutral-200: #1e2128;
+  --color-neutral-100: #191925;
+  --color-neutral-50: #141419;
+  --color-neutral-0: #0e1219;
+}
+
+/* ══════════════════════════════════════════
+   SETTINGS — TABLET / MOBILE
+══════════════════════════════════════════ */
+@media (max-width: 1023px) {
+  /* On tablet/mobile, settings-view is full-width stack */
+  .settings-view {
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Hide sub-nav on mobile when a panel is open (full-screen panel) */
+  .settings-nav {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--color-neutral-200);
+    padding: 12px 16px;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .settings-content {
+    padding: 24px 20px;
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .settings-panel-title {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 767px) {
+  .settings-nav {
+    padding: 10px 12px;
+  }
+  .settings-content {
+    padding: 20px 16px;
+  }
+  .settings-panel-title {
+    font-size: 16px;
+  }
+  .settings-options {
+    gap: 10px;
+  }
+  .settings-option {
+    padding: 12px 14px;
+    gap: 12px;
+  }
+  .settings-option-icon {
+    width: 38px;
+    height: 38px;
+  }
+  .toast {
+    bottom: 80px;
+  }
 }
