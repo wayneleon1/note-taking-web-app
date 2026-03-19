@@ -6,6 +6,7 @@ body {
   justify-content: center;
   padding: 24px;
   color: var(--color-neutral-950);
+  overflow: auto;
 }
 
 /* ── Card ── */
@@ -19,7 +20,6 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0;
 }
 
 /* ── Logo ── */
@@ -30,30 +30,39 @@ body {
   margin-bottom: 20px;
   text-decoration: none;
 }
-
-.auth-logo svg {
-  width: 28px;
-  height: 28px;
-  flex-shrink: 0;
+.auth-logo img {
+  height: 32px;
+  width: auto;
 }
 
-/* ── Heading block ── */
+/* ── Heading ── */
 .auth-heading {
   text-align: center;
   margin-bottom: 28px;
 }
-
 .auth-heading h1 {
   font-size: 22px;
   font-weight: 700;
   color: var(--color-neutral-950);
   margin-bottom: 6px;
 }
-
 .auth-heading p {
   font-size: 14px;
   color: var(--color-neutral-500);
   line-height: 1.5;
+}
+
+/* ── Error banner ── */
+.auth-error {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--color-red-100);
+  color: var(--color-red-500);
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 16px;
+  border: 1px solid var(--color-red-500);
 }
 
 /* ── Form ── */
@@ -65,7 +74,23 @@ body {
   margin-bottom: 20px;
 }
 
-/* full-width sign-up button */
+.password-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.forgot-link {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-neutral-500);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.forgot-link:hover {
+  color: var(--color-neutral-950);
+}
+
 .auth-form .btn-primary {
   width: 100%;
   padding: 14px 20px;
@@ -73,6 +98,47 @@ body {
   font-weight: 600;
   border-radius: 10px;
   margin-top: 4px;
+}
+
+/* ── Input overrides ── */
+.auth-form .input-label {
+  font-size: 14px;
+  font-weight: 600;
+}
+.auth-form .input {
+  padding: 12px 44px 12px 14px;
+  font-size: 14px;
+  border-radius: 10px;
+  border-color: var(--color-neutral-200);
+}
+.auth-form .input:focus {
+  border-color: var(--color-neutral-950);
+  box-shadow: 0 0 0 3px var(--color-neutral-100);
+}
+
+/* Password toggle button */
+.pw-toggle-btn {
+  pointer-events: all !important;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+}
+.pw-toggle-btn img {
+  width: 18px;
+  height: 18px;
+  opacity: 0.55;
+}
+.pw-toggle-btn:hover img {
+  opacity: 0.9;
+}
+
+/* Inline field error hint */
+.input-hint--error {
+  color: var(--color-red-500) !important;
+  gap: 4px;
 }
 
 /* ── Divider ── */
@@ -85,7 +151,6 @@ body {
   color: var(--color-neutral-400);
   font-size: 13px;
 }
-
 .auth-divider::before,
 .auth-divider::after {
   content: "";
@@ -105,58 +170,42 @@ body {
   border-radius: 10px;
   border: 1.5px solid var(--color-neutral-200);
   background: var(--color-neutral-0);
-  font-family: "Manrope", sans-serif;
+  font-family: "Manrope", "Arial", sans-serif;
   font-size: 15px;
   font-weight: 600;
   color: var(--color-neutral-950);
   cursor: pointer;
   transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease;
+    background-color 0.15s,
+    border-color 0.15s;
   margin-bottom: 20px;
 }
-
 .btn-google:hover {
   background-color: var(--color-neutral-50);
   border-color: var(--color-neutral-300);
 }
-
 .btn-google svg {
   width: 20px;
   height: 20px;
   flex-shrink: 0;
 }
 
-/* ── Footer link ── */
+/* ── Footer ── */
 .auth-footer {
   font-size: 14px;
   color: var(--color-neutral-500);
 }
-
 .auth-footer a {
   color: var(--color-neutral-950);
   font-weight: 600;
   text-decoration: none;
 }
-
 .auth-footer a:hover {
   text-decoration: underline;
 }
 
-/* ── Input overrides for auth pages ── */
-.auth-form .input-label {
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.auth-form .input {
-  padding: 12px 42px;
-  font-size: 14px;
-  border-radius: 10px;
-  border-color: var(--color-neutral-200);
-}
-
-.auth-form .input:focus {
-  border-color: var(--color-neutral-950);
-  box-shadow: 0 0 0 3px var(--color-neutral-100);
+@media (max-width: 480px) {
+  .auth-card {
+    padding: 32px 24px;
+  }
 }

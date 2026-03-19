@@ -10,7 +10,6 @@
       href="./assets/images/favicon-32x32.png"
     />
     <title>Login | Note-taking web app</title>
-
     <link rel="stylesheet" href="/styles/index.css" />
     <link rel="stylesheet" href="/styles/login.css" />
   </head>
@@ -18,7 +17,7 @@
     <div class="auth-card">
       <!-- Logo -->
       <a href="#" class="auth-logo" aria-label="Notes home">
-        <img src="/assets/images/logo.svg" />
+        <img src="/assets/images/logo.svg" alt="Notes" />
       </a>
 
       <!-- Heading -->
@@ -27,10 +26,17 @@
         <p>Please log in to continue</p>
       </div>
 
+      <!-- Error banner -->
+      <div
+        class="auth-error"
+        id="auth-error"
+        style="display: none"
+        role="alert"
+      ></div>
+
       <!-- Form -->
-      <form class="auth-form" novalidate>
-        <!-- Email -->
-        <div class="input-group">
+      <form class="auth-form" id="login-form" novalidate>
+        <div class="input-group" id="email-group">
           <label class="input-label" for="login-email">Email Address</label>
           <div class="input-wrapper">
             <input
@@ -39,13 +45,16 @@
               type="email"
               placeholder="email@example.com"
               autocomplete="email"
-              style="padding-left: 14px; padding-right: 14px"
             />
           </div>
+          <p
+            class="input-hint input-hint--error"
+            id="email-error"
+            style="display: none"
+          ></p>
         </div>
 
-        <!-- Password + Forgot row -->
-        <div class="input-group">
+        <div class="input-group" id="pw-group">
           <div class="password-label-row">
             <label class="input-label" for="login-password">Password</label>
             <a href="#" class="forgot-link">Forgot</a>
@@ -57,48 +66,41 @@
               type="password"
               placeholder=""
               autocomplete="current-password"
-              style="padding-left: 14px; padding-right: 42px"
             />
-            <!-- Toggle visibility -->
             <button
               type="button"
-              class="input-icon input-icon--right"
+              class="input-icon input-icon--right pw-toggle-btn"
               id="toggle-login-password"
-              aria-label="Toggle password visibility"
-              style="
-                pointer-events: all;
-                cursor: pointer;
-                background: none;
-                border: none;
-                padding: 0;
-              "
+              aria-label="Show password"
             >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
+              <img
+                src="/assets/images/icon-show-password.svg"
+                alt=""
+                class="pw-eye-show"
+              />
+              <img
+                src="/assets/images/icon-hide-password.svg"
+                alt=""
+                class="pw-eye-hide"
+                style="display: none"
+              />
             </button>
           </div>
+          <p
+            class="input-hint input-hint--error"
+            id="pw-error"
+            style="display: none"
+          ></p>
         </div>
 
-        <!-- Submit -->
-        <button type="submit" class="btn btn-primary">Login</button>
+        <button type="submit" class="btn btn-primary" id="login-btn">
+          Login
+        </button>
       </form>
 
       <!-- Social -->
       <div class="auth-divider">Or log in with:</div>
-
-      <button type="button" class="btn-google">
+      <button type="button" class="btn-google" id="btn-google-login">
         <svg
           viewBox="0 0 24 24"
           xmlns="http://www.w3.org/2000/svg"
@@ -130,50 +132,81 @@
       </p>
     </div>
 
+    <script src="auth.js"></script>
     <script>
-      // Password visibility toggle
-      const toggleBtn = document.getElementById("toggle-login-password");
-      const pwField = document.getElementById("login-password");
+      // Redirect if already logged in
+      if (AuthService.isLoggedIn()) window.location.href = "index.html";
 
-      toggleBtn.addEventListener("click", () => {
-        const isPassword = pwField.type === "password";
-        pwField.type = isPassword ? "text" : "password";
-        toggleBtn.setAttribute(
-          "aria-label",
-          isPassword ? "Hide password" : "Toggle password visibility",
-        );
-      });
+      // Password toggle
+      document
+        .getElementById("toggle-login-password")
+        .addEventListener("click", function () {
+          const input = document.getElementById("login-password");
+          const isPassword = input.type === "password";
+          input.type = isPassword ? "text" : "password";
+          this.querySelector(".pw-eye-show").style.display = isPassword
+            ? "none"
+            : "block";
+          this.querySelector(".pw-eye-hide").style.display = isPassword
+            ? "block"
+            : "none";
+          this.setAttribute(
+            "aria-label",
+            isPassword ? "Hide password" : "Show password",
+          );
+        });
 
-      // Basic client-side validation
-      document.querySelector(".auth-form").addEventListener("submit", (e) => {
-        e.preventDefault();
+      // Form submit
+      document
+        .getElementById("login-form")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+          const email = document.getElementById("login-email").value.trim();
+          const password = document.getElementById("login-password").value;
+          const result = AuthService.login(email, password);
 
-        const emailGroup = document
-          .getElementById("login-email")
-          .closest(".input-group");
-        const pwGroup = document
-          .getElementById("login-password")
-          .closest(".input-group");
-        let valid = true;
+          // Clear errors
+          document.getElementById("email-error").style.display = "none";
+          document.getElementById("pw-error").style.display = "none";
+          document
+            .getElementById("email-group")
+            .classList.remove("input-group--error");
+          document
+            .getElementById("pw-group")
+            .classList.remove("input-group--error");
+          document.getElementById("auth-error").style.display = "none";
 
-        [emailGroup, pwGroup].forEach((g) =>
-          g.classList.remove("input-group--error"),
-        );
+          if (result.success) {
+            window.location.href = "index.html";
+          } else {
+            if (result.field === "email") {
+              document
+                .getElementById("email-group")
+                .classList.add("input-group--error");
+              document.getElementById("email-error").textContent =
+                result.message;
+              document.getElementById("email-error").style.display = "flex";
+            } else if (result.field === "password") {
+              document
+                .getElementById("pw-group")
+                .classList.add("input-group--error");
+              document.getElementById("pw-error").textContent = result.message;
+              document.getElementById("pw-error").style.display = "flex";
+            } else {
+              document.getElementById("auth-error").textContent =
+                result.message;
+              document.getElementById("auth-error").style.display = "block";
+            }
+          }
+        });
 
-        if (!document.getElementById("login-email").value.includes("@")) {
-          emailGroup.classList.add("input-group--error");
-          valid = false;
-        }
-        if (document.getElementById("login-password").value.length < 1) {
-          pwGroup.classList.add("input-group--error");
-          valid = false;
-        }
-
-        if (valid) {
-          // TODO: submit to your backend
-          console.log("Form valid — submit");
-        }
-      });
+      // Google login (simulated)
+      document
+        .getElementById("btn-google-login")
+        .addEventListener("click", function () {
+          const result = AuthService.loginWithGoogle();
+          if (result.success) window.location.href = "index.html";
+        });
     </script>
   </body>
 </html>

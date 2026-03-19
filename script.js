@@ -1,29 +1,118 @@
 /**
  * Notes App — script.js
- * Handles notes CRUD, routing, settings (color theme, font, password).
+ * ─────────────────────────────────────────────────────────────────────
+ * Features:
+ *   • Auth guard (redirects to login.html if not logged in)
+ *   • localStorage  — notes persistence, user preferences
+ *   • sessionStorage — draft auto-save while typing, restored on reload
+ *   • Geolocation API — attach city/coords tag to a note (bonus)
+ *   • localStorage quota error handling
+ *   • Full CRUD, archiving, settings, modals, toasts
  */
+
+// ══════════════════════════════════════════════════
+//  AUTH GUARD — must be first
+// ══════════════════════════════════════════════════
+
+if (typeof AuthService !== "undefined" && !AuthService.isLoggedIn()) {
+  window.location.href = "auth/login.html";
+}
+
+// ══════════════════════════════════════════════════
+//  STORAGE KEYS
+// ══════════════════════════════════════════════════
+
+const STORAGE_KEYS = {
+  notes: "notes_data", // localStorage  – all notes
+  colorTheme: "colorTheme", // localStorage  – color theme
+  fontTheme: "fontTheme", // localStorage  – font theme
+  draft: "notes_draft", // sessionStorage – unsaved draft
+};
+
+// ══════════════════════════════════════════════════
+//  LOCALSTORAGE HELPERS  (with quota-error handling)
+// ══════════════════════════════════════════════════
+
+/**
+ * Write a value to localStorage.
+ * Returns true on success, false on QuotaExceededError.
+ */
+function lsSet(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+    return true;
+  } catch (e) {
+    if (e.name === "QuotaExceededError" || e.code === 22) {
+      showToast(
+        "Storage full — some data could not be saved. Try deleting old notes.",
+        null,
+        null,
+        "error",
+      );
+      return false;
+    }
+    console.error("localStorage write error:", e);
+    return false;
+  }
+}
+
+function lsGet(key, fallback = null) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw !== null ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  SESSIONSTORAGE DRAFT HELPERS
+// ══════════════════════════════════════════════════
+
+function saveDraft(title, tags, content) {
+  try {
+    sessionStorage.setItem(
+      STORAGE_KEYS.draft,
+      JSON.stringify({ title, tags, content, savedAt: Date.now() }),
+    );
+  } catch {
+    /* session storage full — silent fail */
+  }
+}
+
+function loadDraft() {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEYS.draft);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function clearDraft() {
+  sessionStorage.removeItem(STORAGE_KEYS.draft);
+}
 
 // ══════════════════════════════════════════════════
 //  APP STATE
 // ══════════════════════════════════════════════════
 
 let notes = [];
-let currentView = "all"; // 'all' | 'archived' | 'tag:<n>' | 'settings'
+let currentView = "all";
 let activeNoteId = null;
 let isNewNote = false;
 let searchQuery = "";
+let draftTimer = null; // debounce timer for auto-saving draft
 
-// Settings state (persisted to localStorage)
 let appSettings = {
-  colorTheme: localStorage.getItem("colorTheme") || "light",
-  fontTheme: localStorage.getItem("fontTheme") || "sans-serif",
+  colorTheme: lsGet(STORAGE_KEYS.colorTheme, "light"),
+  fontTheme: lsGet(STORAGE_KEYS.fontTheme, "sans-serif"),
 };
 
-// Which settings sub-panel is open
 let activeSettingPanel = "color-theme";
 
 // ══════════════════════════════════════════════════
-//  DOM REFS — NOTES
+//  DOM REFS
 // ══════════════════════════════════════════════════
 
 const notesList = document.getElementById("notes-list");
@@ -45,26 +134,84 @@ const panelPageTitle = document.getElementById("panel-page-title");
 const panelPageSubtitle = document.getElementById("panel-page-subtitle");
 const mobileDeleteBtn = document.getElementById("mobile-delete-btn");
 const mobileArchiveBtn = document.getElementById("mobile-archive-btn");
-const modalOverlay = document.getElementById("modal-overlay");
 const notesView = document.getElementById("notes-view");
 const settingsView = document.getElementById("settings-view");
-const toast = document.getElementById("toast");
 
 // ══════════════════════════════════════════════════
-//  DATA LOADING
+//  DATA — LOAD / SAVE
 // ══════════════════════════════════════════════════
 
+/**
+ * Load notes: try localStorage first, then data.json, then fallback.
+ */
 async function loadNotes() {
-  try {
-    const res = await fetch("data.json");
-    if (!res.ok) throw new Error("Failed to load");
-    const data = await res.json();
-    notes = data.notes.map((n, i) => ({ ...n, id: i + 1 }));
-  } catch {
-    notes = getFallbackNotes();
+  const stored = lsGet(STORAGE_KEYS.notes, null);
+
+  if (stored && Array.isArray(stored) && stored.length > 0) {
+    notes = stored;
+  } else {
+    // First run — seed from data.json
+    try {
+      const res = await fetch("data.json");
+      if (!res.ok) throw new Error("No data.json");
+      const data = await res.json();
+      notes = data.notes.map((n, i) => ({ ...n, id: i + 1 }));
+    } catch {
+      notes = getFallbackNotes();
+    }
+    persistNotes(); // write seed data to localStorage
   }
+
   applySettings();
   renderAll();
+  restoreDraftIfAny(); // sessionStorage draft check
+}
+
+/** Write current notes array to localStorage */
+function persistNotes() {
+  lsSet(STORAGE_KEYS.notes, notes);
+}
+
+/** Check sessionStorage for an unsaved draft and offer to restore it */
+function restoreDraftIfAny() {
+  const draft = loadDraft();
+  if (!draft || !draft.title) return;
+
+  // Show draft banner
+  const banner = document.createElement("div");
+  banner.className = "draft-banner";
+  banner.innerHTML = `
+    <span>📝 You have an unsaved draft: <strong>${esc(draft.title)}</strong></span>
+    <div class="draft-banner-actions">
+      <button class="draft-btn draft-btn--restore" id="btn-restore-draft">Restore</button>
+      <button class="draft-btn draft-btn--discard" id="btn-discard-draft">Discard</button>
+    </div>`;
+
+  document.querySelector(".notes-panel").prepend(banner);
+
+  document.getElementById("btn-restore-draft").addEventListener("click", () => {
+    banner.remove();
+    // Open a new note form pre-filled with draft
+    isNewNote = true;
+    activeNoteId = null;
+    detailTitleInput.value = draft.title;
+    detailTagsInput.value = draft.tags || "";
+    detailContentArea.value = draft.content || "";
+    detailDateSpan.textContent = "Not yet saved";
+    detailStatusRow.style.display = "none";
+    updateMobileActionIcons(false, false);
+    actionsPanel.innerHTML = "";
+    showDetailPanel();
+    document
+      .querySelectorAll(".note-card")
+      .forEach((c) => c.classList.remove("active"));
+    showToast("Draft restored. Remember to save!");
+  });
+
+  document.getElementById("btn-discard-draft").addEventListener("click", () => {
+    clearDraft();
+    banner.remove();
+  });
 }
 
 function getFallbackNotes() {
@@ -128,7 +275,7 @@ function getFallbackNotes() {
       title: "React Component Library",
       tags: ["Dev", "React"],
       content:
-        "Custom Component Library Structure:\n\n1. Basic Components\n- Button\n- Input\n- Card\n- Modal\n\n2. Form Components\n- FormField\n- Select\n- Checkbox\n- RadioGroup\n\n3. Layout Components\n- Container\n- Grid\n- Flex\n\nAll components need:\n- TypeScript definitions\n- Unit tests\n- Storybook documentation\n- Accessibility support",
+        "Custom Component Library:\n\n1. Basic: Button, Input, Card, Modal\n2. Form: FormField, Select, Checkbox, RadioGroup\n3. Layout: Container, Grid, Flex\n\nAll components need TypeScript defs, unit tests, Storybook docs, a11y support.",
       lastEdited: "2024-10-15T14:23:45Z",
       isArchived: true,
     },
@@ -137,7 +284,7 @@ function getFallbackNotes() {
       title: "Meal Prep Ideas",
       tags: ["Cooking", "Health", "Recipes"],
       content:
-        "Weekly Meal Prep Plan:\n\nBreakfast Options:\n- Overnight oats\n- Egg muffins\n- Smoothie packs\n\nLunch Containers:\n- Greek chicken bowl\n- Buddha bowls\n- Tuna pasta salad\n\nSnacks:\n- Cut vegetables\n- Mixed nuts\n- Greek yogurt parfait\n\nPrep Time: Sunday 2-4pm\nStorage: Glass containers\nLasts: 4-5 days",
+        "Weekly Meal Prep Plan:\n\nBreakfast: Overnight oats, Egg muffins, Smoothie packs\nLunch: Greek chicken bowl, Buddha bowls, Tuna pasta salad\nSnacks: Cut vegetables, Mixed nuts, Greek yogurt parfait\n\nPrep Time: Sunday 2-4pm. Glass containers. Lasts 4-5 days.",
       lastEdited: "2024-10-12T09:45:15Z",
       isArchived: false,
     },
@@ -146,7 +293,7 @@ function getFallbackNotes() {
       title: "Reading List",
       tags: ["Personal", "Dev"],
       content:
-        "Current Reading Queue:\n\n1. Technical Books\n- Clean Architecture by Robert Martin\n- Designing Data-Intensive Applications\n- TypeScript Design Patterns\n\n2. Personal Development\n- Deep Work by Cal Newport\n- Atomic Habits\n- The Psychology of Money\n\nCurrently Reading: Clean Architecture\nNext Up: Deep Work\n\nGoal: One book per month",
+        "Technical:\n- Clean Architecture – Robert Martin\n- Designing Data-Intensive Applications\n- TypeScript Design Patterns\n\nPersonal:\n- Deep Work – Cal Newport\n- Atomic Habits\n- The Psychology of Money\n\nGoal: one book/month.",
       lastEdited: "2024-10-05T12:20:30Z",
       isArchived: false,
     },
@@ -155,7 +302,7 @@ function getFallbackNotes() {
       title: "Fitness Goals 2025",
       tags: ["Fitness", "Health", "Personal"],
       content:
-        "2025 Fitness Objectives:\n\n1. Strength Goals\n- Bench press: 225 lbs\n- Squat: 315 lbs\n- Deadlift: 405 lbs\n\n2. Cardio Goals\n- Run half marathon\n- 5k under 25 minutes\n\n3. Habits\n- Gym 4x per week\n- Daily 10k steps\n- Sleep 7+ hours\n\nTrack all workouts in Strong app",
+        "Strength: Bench 225 lbs, Squat 315 lbs, Deadlift 405 lbs\nCardio: Half marathon, 5k < 25 min\nHabits: Gym 4×/week, 10k steps/day, 7+ hrs sleep\n\nTrack in Strong app.",
       lastEdited: "2024-09-22T07:30:00Z",
       isArchived: false,
     },
@@ -211,15 +358,53 @@ function nextId() {
   return notes.length > 0 ? Math.max(...notes.map((n) => n.id)) + 1 : 1;
 }
 
-/** Show a brief toast notification */
-function showToast(msg, type = "success") {
-  toast.textContent = msg;
-  toast.className = `toast toast--${type} toast--visible`;
-  clearTimeout(toast._timer);
-  toast._timer = setTimeout(
-    () => toast.classList.remove("toast--visible"),
-    3000,
-  );
+// ══════════════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════════════
+
+function showToast(msg, link = null, onLink = null, type = "success") {
+  const toastEl = document.getElementById("toast");
+  const msgEl = document.getElementById("toast-msg");
+  const linkEl = document.getElementById("toast-link");
+
+  msgEl.textContent = msg;
+
+  if (link) {
+    linkEl.textContent = link;
+    linkEl.style.display = "block";
+    linkEl.onclick = (e) => {
+      e.preventDefault();
+      if (onLink) onLink();
+      dismissToast();
+    };
+  } else {
+    linkEl.style.display = "none";
+    linkEl.onclick = null;
+  }
+
+  const iconEl = toastEl.querySelector(".toast-icon");
+  if (type === "error") {
+    iconEl.src = "./assets/images/icon-cross.svg";
+    toastEl.classList.add("toast--error");
+  } else {
+    iconEl.src = "./assets/images/icon-checkmark.svg";
+    toastEl.classList.remove("toast--error");
+  }
+
+  toastEl.style.display = "block";
+  toastEl.getBoundingClientRect(); // force reflow
+  toastEl.classList.add("toast--visible");
+  clearTimeout(toastEl._timer);
+  toastEl._timer = setTimeout(dismissToast, 4000);
+}
+
+function dismissToast() {
+  const toastEl = document.getElementById("toast");
+  toastEl.classList.remove("toast--visible");
+  clearTimeout(toastEl._timer);
+  toastEl._timer = setTimeout(() => {
+    toastEl.style.display = "none";
+  }, 250);
 }
 
 // ══════════════════════════════════════════════════
@@ -235,7 +420,6 @@ const FONT_MAP = {
 function applySettings() {
   const { colorTheme, fontTheme } = appSettings;
 
-  // ── Color theme ──
   document.documentElement.setAttribute(
     "data-theme",
     colorTheme === "system"
@@ -245,54 +429,52 @@ function applySettings() {
       : colorTheme,
   );
 
-  // ── Font theme ──
   document.documentElement.style.setProperty(
     "--app-font",
     FONT_MAP[fontTheme] || FONT_MAP["sans-serif"],
   );
-  document.body.style.fontFamily = `var(--app-font)`;
+  document.body.style.fontFamily =
+    FONT_MAP[fontTheme] || FONT_MAP["sans-serif"];
 
-  // Sync radio buttons to current state
   const colorRadio = document.querySelector(
     `input[name="color-theme"][value="${colorTheme}"]`,
   );
   if (colorRadio) colorRadio.checked = true;
-
   const fontRadio = document.querySelector(
     `input[name="font-theme"][value="${fontTheme}"]`,
   );
   if (fontRadio) fontRadio.checked = true;
 
-  // Sync option highlight classes
   syncOptionHighlights("color-theme", colorTheme);
   syncOptionHighlights("font-theme", fontTheme);
 }
 
-/** Highlight the selected option row */
 function syncOptionHighlights(radioName, value) {
-  document.querySelectorAll(`input[name="${radioName}"]`).forEach((radio) => {
-    radio
-      .closest(".settings-option")
-      ?.classList.toggle("active", radio.value === value);
-  });
+  document
+    .querySelectorAll(`input[name="${radioName}"]`)
+    .forEach((radio) =>
+      radio
+        .closest(".settings-option")
+        ?.classList.toggle("active", radio.value === value),
+    );
 }
 
 function saveColorTheme() {
   const selected = document.querySelector('input[name="color-theme"]:checked');
   if (!selected) return;
   appSettings.colorTheme = selected.value;
-  localStorage.setItem("colorTheme", selected.value);
+  lsSet(STORAGE_KEYS.colorTheme, selected.value);
   applySettings();
-  showToast("Color theme updated.");
+  showToast("Settings updated successfully!");
 }
 
 function saveFontTheme() {
   const selected = document.querySelector('input[name="font-theme"]:checked');
   if (!selected) return;
   appSettings.fontTheme = selected.value;
-  localStorage.setItem("fontTheme", selected.value);
+  lsSet(STORAGE_KEYS.fontTheme, selected.value);
   applySettings();
-  showToast("Font theme updated.");
+  showToast("Settings updated successfully!");
 }
 
 function savePassword() {
@@ -300,20 +482,19 @@ function savePassword() {
   const newPw = document.getElementById("pw-new").value;
   const confPw = document.getElementById("pw-confirm").value;
 
-  // Clear previous error states
-  ["pw-old", "pw-new", "pw-confirm"].forEach((id) => {
+  ["pw-old", "pw-new", "pw-confirm"].forEach((id) =>
     document
       .getElementById(id)
       .closest(".settings-field-input-wrap")
-      .classList.remove("input-error");
-  });
+      .classList.remove("input-error"),
+  );
 
   if (!oldPw) {
     document
       .getElementById("pw-old")
       .closest(".settings-field-input-wrap")
       .classList.add("input-error");
-    showToast("Please enter your current password.", "error");
+    showToast("Please enter your current password.", null, null, "error");
     return;
   }
   if (newPw.length < 8) {
@@ -321,7 +502,12 @@ function savePassword() {
       .getElementById("pw-new")
       .closest(".settings-field-input-wrap")
       .classList.add("input-error");
-    showToast("New password must be at least 8 characters.", "error");
+    showToast(
+      "New password must be at least 8 characters.",
+      null,
+      null,
+      "error",
+    );
     return;
   }
   if (newPw !== confPw) {
@@ -329,15 +515,14 @@ function savePassword() {
       .getElementById("pw-confirm")
       .closest(".settings-field-input-wrap")
       .classList.add("input-error");
-    showToast("Passwords do not match.", "error");
+    showToast("Passwords do not match.", null, null, "error");
     return;
   }
 
-  // Clear fields on success
   ["pw-old", "pw-new", "pw-confirm"].forEach(
     (id) => (document.getElementById(id).value = ""),
   );
-  showToast("Password changed successfully.");
+  showToast("Password changed successfully!");
 }
 
 // ══════════════════════════════════════════════════
@@ -350,13 +535,11 @@ function openSettings(panel) {
   settingsView.style.display = "flex";
   topbarTitle.textContent = "Settings";
 
-  // Sync bottom nav
   document
     .querySelectorAll(".bottom-nav-item")
     .forEach((i) =>
       i.classList.toggle("active", i.dataset.view === "settings"),
     );
-  // Sync sidebar (no item matches 'settings' — deselect all)
   document
     .querySelectorAll(".sidebar-nav-item[data-view]")
     .forEach((i) => i.classList.remove("active"));
@@ -372,8 +555,6 @@ function closeSettings() {
 
 function switchSettingsPanel(panelId) {
   activeSettingPanel = panelId;
-
-  // Highlight correct sub-nav item
   document
     .querySelectorAll(".settings-nav-item[data-setting]")
     .forEach((item) => {
@@ -382,15 +563,103 @@ function switchSettingsPanel(panelId) {
       const chevron = item.querySelector(".settings-nav-chevron");
       if (chevron) chevron.style.display = isActive ? "block" : "none";
     });
-
-  // Show correct panel
   document
     .querySelectorAll(".settings-panel")
     .forEach((p) => p.classList.toggle("active", p.id === `panel-${panelId}`));
 }
 
 // ══════════════════════════════════════════════════
-//  RENDER — NOTES
+//  GEOLOCATION — attach location tag to a note
+// ══════════════════════════════════════════════════
+
+/**
+ * Request geolocation, reverse-geocode to city name (via nominatim),
+ * then add a location tag to the active note.
+ */
+function attachLocationToNote() {
+  if (!navigator.geolocation) {
+    showToast(
+      "Geolocation is not supported by your browser.",
+      null,
+      null,
+      "error",
+    );
+    return;
+  }
+
+  showToast("Requesting location…");
+
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      const { latitude, longitude } = pos.coords;
+      let locationLabel = `${latitude.toFixed(3)},${longitude.toFixed(3)}`;
+
+      // Try to resolve city name via Nominatim (OpenStreetMap)
+      try {
+        const resp = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+          { headers: { "Accept-Language": "en" } },
+        );
+        const geo = await resp.json();
+        const city =
+          geo?.address?.city ||
+          geo?.address?.town ||
+          geo?.address?.village ||
+          geo?.address?.county;
+        if (city) locationLabel = city;
+      } catch {
+        /* keep coords if reverse geocoding fails */
+      }
+
+      // Add location as a tag on the active note (or new note in progress)
+      const tag = `📍 ${locationLabel}`;
+
+      if (activeNoteId !== null) {
+        const idx = notes.findIndex((n) => n.id === activeNoteId);
+        if (idx !== -1 && !notes[idx].tags.includes(tag)) {
+          notes[idx].tags.push(tag);
+          notes[idx].lastEdited = new Date().toISOString();
+          // Sync to detail tags input if note is open
+          detailTagsInput.value = notes[idx].tags.join(", ");
+          persistNotes();
+          renderAll();
+          showToast(`Location added: ${locationLabel}`, null, null, "success");
+        } else {
+          showToast("Location already added to this note.");
+        }
+      } else if (isNewNote) {
+        // Add to new-note draft
+        const existing = detailTagsInput.value.trim();
+        detailTagsInput.value = existing ? `${existing}, ${tag}` : tag;
+        showToast(`Location added: ${locationLabel}`);
+      } else {
+        showToast(
+          "Open a note first to attach a location.",
+          null,
+          null,
+          "error",
+        );
+      }
+    },
+    (err) => {
+      const messages = {
+        1: "Location access denied. Please allow location in your browser settings.",
+        2: "Location unavailable. Check your connection or device settings.",
+        3: "Location request timed out. Please try again.",
+      };
+      showToast(
+        messages[err.code] || "Could not retrieve location.",
+        null,
+        null,
+        "error",
+      );
+    },
+    { timeout: 10000, maximumAge: 60000 },
+  );
+}
+
+// ══════════════════════════════════════════════════
+//  RENDER
 // ══════════════════════════════════════════════════
 
 function renderAll() {
@@ -487,6 +756,7 @@ function openNote(noteId) {
   showDetailPanel();
   renderNotesList();
   renderActionsPanel(note);
+  clearDraft(); // opening a saved note clears any orphaned draft
 }
 
 function openNewNote() {
@@ -561,13 +831,19 @@ function renderActionsPanel(note) {
       </button>
       <button class="action-card action-card--danger" id="btn-delete">
         <img src="./assets/images/icon-delete.svg" alt="" />Delete Note
+      </button>
+      <button class="action-card" id="btn-location" title="Attach your current location to this note">
+        <img src="./assets/images/icon-tag.svg" alt="" />Add Location
       </button>`;
     document
       .getElementById("btn-archive")
-      .addEventListener("click", () => archiveNote(note.id));
+      .addEventListener("click", () => confirmArchive(note.id));
     document
       .getElementById("btn-delete")
       .addEventListener("click", () => confirmDelete(note.id));
+    document
+      .getElementById("btn-location")
+      .addEventListener("click", attachLocationToNote);
   }
 }
 
@@ -580,7 +856,6 @@ function setView(view) {
   activeNoteId = null;
   isNewNote = false;
 
-  // Ensure notes view is visible
   notesView.style.display = "flex";
   settingsView.style.display = "none";
 
@@ -640,11 +915,13 @@ function saveNote() {
       notes[idx] = { ...notes[idx], title, tags, content, lastEdited: now };
   }
 
+  persistNotes();
+  clearDraft(); // successfully saved — remove draft
   detailDateSpan.textContent = formatDate(now);
   renderAll();
   const saved = notes.find((n) => n.id === activeNoteId);
   if (saved) renderActionsPanel(saved);
-  showToast("Note saved.");
+  showToast("Note saved successfully!");
 }
 
 function cancelEdit() {
@@ -652,6 +929,7 @@ function cancelEdit() {
     isNewNote = false;
     activeNoteId = null;
     hideDetailPanel();
+    clearDraft();
   } else if (activeNoteId !== null) openNote(activeNoteId);
   renderNotesList();
 }
@@ -662,10 +940,11 @@ function archiveNote(noteId) {
     notes[idx].isArchived = true;
     notes[idx].lastEdited = new Date().toISOString();
   }
+  persistNotes();
   activeNoteId = null;
   hideDetailPanel();
   renderAll();
-  showToast("Note archived.");
+  showToast("Note archived.", "Archived Notes", () => setView("archived"));
 }
 
 function restoreNote(noteId) {
@@ -674,24 +953,60 @@ function restoreNote(noteId) {
     notes[idx].isArchived = false;
     notes[idx].lastEdited = new Date().toISOString();
   }
+  persistNotes();
   activeNoteId = null;
   hideDetailPanel();
   renderAll();
-  showToast("Note restored.");
+  showToast("Note restored to active notes.", "All Notes", () =>
+    setView("all"),
+  );
 }
 
 let pendingDeleteId = null;
+let pendingArchiveId = null;
+
 function confirmDelete(noteId) {
   pendingDeleteId = noteId;
-  modalOverlay.style.display = "flex";
+  document.getElementById("modal-delete-overlay").style.display = "flex";
+}
+
+function confirmArchive(noteId) {
+  pendingArchiveId = noteId;
+  document.getElementById("modal-archive-overlay").style.display = "flex";
+}
+
+function closeDeleteModal() {
+  document.getElementById("modal-delete-overlay").style.display = "none";
+  pendingDeleteId = null;
+}
+
+function closeArchiveModal() {
+  document.getElementById("modal-archive-overlay").style.display = "none";
+  pendingArchiveId = null;
 }
 
 function deleteNote(noteId) {
   notes = notes.filter((n) => n.id !== noteId);
+  persistNotes();
   activeNoteId = null;
   hideDetailPanel();
   renderAll();
-  showToast("Note deleted.");
+  showToast("Note permanently deleted.");
+}
+
+// ══════════════════════════════════════════════════
+//  DRAFT AUTO-SAVE  (sessionStorage, debounced)
+// ══════════════════════════════════════════════════
+
+function scheduleDraftSave() {
+  clearTimeout(draftTimer);
+  draftTimer = setTimeout(() => {
+    const title = detailTitleInput.value.trim();
+    const tags = detailTagsInput.value.trim();
+    const content = detailContentArea.value.trim();
+    // Only save draft when actively writing a new note or editing
+    if (title || content) saveDraft(title, tags, content);
+  }, 800); // 800 ms debounce
 }
 
 // ══════════════════════════════════════════════════
@@ -732,7 +1047,7 @@ document.querySelectorAll(".settings-nav-item[data-setting]").forEach((item) =>
   }),
 );
 
-/* ── Settings option radio click → highlight row ── */
+/* ── Settings option radio click ── */
 document.querySelectorAll(".settings-option").forEach((opt) => {
   opt.addEventListener("click", () => {
     const radio = opt.querySelector('input[type="radio"]');
@@ -747,7 +1062,7 @@ document.querySelectorAll(".settings-option").forEach((opt) => {
   });
 });
 
-/* ── Apply / Save buttons ── */
+/* ── Settings apply/save buttons ── */
 document
   .getElementById("btn-apply-color")
   .addEventListener("click", saveColorTheme);
@@ -761,7 +1076,8 @@ document
 /* ── Logout ── */
 document.getElementById("btn-logout").addEventListener("click", (e) => {
   e.preventDefault();
-  showToast("Logged out successfully.");
+  if (typeof AuthService !== "undefined") AuthService.logout();
+  window.location.href = "/auth/login.html";
 });
 
 /* ── Password show/hide toggles ── */
@@ -775,7 +1091,7 @@ document.querySelectorAll(".pw-toggle").forEach((btn) => {
   });
 });
 
-/* ── Notes CRUD buttons ── */
+/* ── Notes CRUD ── */
 document
   .getElementById("btn-create-note")
   .addEventListener("click", openNewNote);
@@ -802,9 +1118,15 @@ mobileDeleteBtn.addEventListener("click", () => {
 mobileArchiveBtn.addEventListener("click", () => {
   if (!activeNoteId) return;
   const note = notes.find((n) => n.id === activeNoteId);
-  if (note)
-    note.isArchived ? restoreNote(activeNoteId) : archiveNote(activeNoteId);
+  if (!note) return;
+  if (note.isArchived) restoreNote(activeNoteId);
+  else confirmArchive(activeNoteId);
 });
+
+/* ── Draft auto-save: fire on every keystroke in title/tags/content ── */
+[detailTitleInput, detailTagsInput, detailContentArea].forEach((el) =>
+  el.addEventListener("input", scheduleDraftSave),
+);
 
 /* ── Search ── */
 searchInput.addEventListener("input", () => {
@@ -812,37 +1134,62 @@ searchInput.addEventListener("input", () => {
   renderNotesList();
 });
 
-/* ── Modal ── */
-document.getElementById("modal-cancel").addEventListener("click", () => {
-  modalOverlay.style.display = "none";
-  pendingDeleteId = null;
-});
-document.getElementById("modal-confirm").addEventListener("click", () => {
-  if (pendingDeleteId !== null) {
-    deleteNote(pendingDeleteId);
-    pendingDeleteId = null;
-  }
-  modalOverlay.style.display = "none";
-});
-modalOverlay.addEventListener("click", (e) => {
-  if (e.target === modalOverlay) {
-    modalOverlay.style.display = "none";
-    pendingDeleteId = null;
-  }
-});
+/* ── Delete modal ── */
+document
+  .getElementById("modal-delete-cancel")
+  .addEventListener("click", closeDeleteModal);
+document
+  .getElementById("modal-delete-confirm")
+  .addEventListener("click", () => {
+    if (pendingDeleteId !== null) deleteNote(pendingDeleteId);
+    closeDeleteModal();
+  });
+document
+  .getElementById("modal-delete-overlay")
+  .addEventListener("click", (e) => {
+    if (e.target === document.getElementById("modal-delete-overlay"))
+      closeDeleteModal();
+  });
+
+/* ── Archive modal ── */
+document
+  .getElementById("modal-archive-cancel")
+  .addEventListener("click", closeArchiveModal);
+document
+  .getElementById("modal-archive-confirm")
+  .addEventListener("click", () => {
+    if (pendingArchiveId !== null) archiveNote(pendingArchiveId);
+    closeArchiveModal();
+  });
+document
+  .getElementById("modal-archive-overlay")
+  .addEventListener("click", (e) => {
+    if (e.target === document.getElementById("modal-archive-overlay"))
+      closeArchiveModal();
+  });
+
+/* ── Toast close ── */
+document.getElementById("toast-close").addEventListener("click", dismissToast);
 
 /* ── Keyboard ── */
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
-    if (modalOverlay.style.display !== "none") {
-      modalOverlay.style.display = "none";
-      pendingDeleteId = null;
-    } else if (detailPanel.classList.contains("mobile-visible"))
+    const delModal = document.getElementById("modal-delete-overlay");
+    const archModal = document.getElementById("modal-archive-overlay");
+    if (delModal.style.display !== "none") {
+      closeDeleteModal();
+      return;
+    }
+    if (archModal.style.display !== "none") {
+      closeArchiveModal();
+      return;
+    }
+    if (detailPanel.classList.contains("mobile-visible"))
       detailPanel.classList.remove("mobile-visible");
   }
 });
 
-/* ── System theme change listener ── */
+/* ── System theme change ── */
 window
   .matchMedia("(prefers-color-scheme: dark)")
   .addEventListener("change", () => {
