@@ -157,20 +157,7 @@ a {
   flex-shrink: 0;
 }
 
-/* ============================================================
-   INPUT FIELD
-   Structure:
-     <div class="input-group">
-       <label class="input-label">Label</label>
-       <div class="input-wrapper">
-         <span class="input-icon input-icon--left">…</span>
-         <input class="input" … />
-         <span class="input-icon input-icon--right">…</span>
-       </div>
-       <p class="input-hint">Hint text</p>
-     </div>
-   ============================================================ */
-
+/* INPUT FIELD */
 .input-group {
   display: flex;
   flex-direction: column;
