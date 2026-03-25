@@ -1,37 +1,15 @@
-/**
- * Notes App — script.js
- * ─────────────────────────────────────────────────────────────────────
- * Features:
- *   • Auth guard (redirects to login.html if not logged in)
- *   • localStorage  — notes persistence, user preferences
- *   • sessionStorage — draft auto-save while typing, restored on reload
- *   • Geolocation API — attach city/coords tag to a note (bonus)
- *   • localStorage quota error handling
- *   • Full CRUD, archiving, settings, modals, toasts
- */
-
-// ══════════════════════════════════════════════════
-//  AUTH GUARD — must be first
-// ══════════════════════════════════════════════════
-
+//  AUTH GUARD
 if (typeof AuthService !== "undefined" && !AuthService.isLoggedIn()) {
   window.location.href = "auth/login.html";
 }
 
-// ══════════════════════════════════════════════════
 //  STORAGE KEYS
-// ══════════════════════════════════════════════════
-
 const STORAGE_KEYS = {
-  notes: "notes_data", // localStorage  – all notes
-  colorTheme: "colorTheme", // localStorage  – color theme
-  fontTheme: "fontTheme", // localStorage  – font theme
-  draft: "notes_draft", // sessionStorage – unsaved draft
+  notes: "notes_data",
+  colorTheme: "colorTheme",
+  fontTheme: "fontTheme",
+  draft: "notes_draft",
 };
-
-// ══════════════════════════════════════════════════
-//  LOCALSTORAGE HELPERS  (with quota-error handling)
-// ══════════════════════════════════════════════════
 
 /**
  * Write a value to localStorage.
@@ -65,9 +43,7 @@ function lsGet(key, fallback = null) {
   }
 }
 
-// ══════════════════════════════════════════════════
 //  SESSIONSTORAGE DRAFT HELPERS
-// ══════════════════════════════════════════════════
 
 function saveDraft(title, tags, content) {
   try {
@@ -76,7 +52,9 @@ function saveDraft(title, tags, content) {
       JSON.stringify({ title, tags, content, savedAt: Date.now() }),
     );
   } catch {
-    /* session storage full — silent fail */
+    console.error(
+      "Failed to save draft. Session storage may be unavailable or full.",
+    );
   }
 }
 
@@ -93,10 +71,7 @@ function clearDraft() {
   sessionStorage.removeItem(STORAGE_KEYS.draft);
 }
 
-// ══════════════════════════════════════════════════
 //  APP STATE
-// ══════════════════════════════════════════════════
-
 let notes = [];
 let currentView = "all";
 let activeNoteId = null;
@@ -111,10 +86,7 @@ let appSettings = {
 
 let activeSettingPanel = "color-theme";
 
-// ══════════════════════════════════════════════════
 //  DOM REFS
-// ══════════════════════════════════════════════════
-
 const notesList = document.getElementById("notes-list");
 const detailEmpty = document.getElementById("detail-empty");
 const detailBody = document.getElementById("detail-body");
@@ -137,13 +109,7 @@ const mobileArchiveBtn = document.getElementById("mobile-archive-btn");
 const notesView = document.getElementById("notes-view");
 const settingsView = document.getElementById("settings-view");
 
-// ══════════════════════════════════════════════════
 //  DATA — LOAD / SAVE
-// ══════════════════════════════════════════════════
-
-/**
- * Load notes: try localStorage first, then data.json, then fallback.
- */
 async function loadNotes() {
   const stored = lsGet(STORAGE_KEYS.notes, null);
 
@@ -309,9 +275,7 @@ function getFallbackNotes() {
   ];
 }
 
-// ══════════════════════════════════════════════════
 //  UTILITIES
-// ══════════════════════════════════════════════════
 
 function formatDate(iso) {
   if (!iso) return "Not yet saved";
@@ -358,10 +322,7 @@ function nextId() {
   return notes.length > 0 ? Math.max(...notes.map((n) => n.id)) + 1 : 1;
 }
 
-// ══════════════════════════════════════════════════
 //  TOAST
-// ══════════════════════════════════════════════════
-
 function showToast(msg, link = null, onLink = null, type = "success") {
   const toastEl = document.getElementById("toast");
   const msgEl = document.getElementById("toast-msg");
@@ -407,10 +368,7 @@ function dismissToast() {
   }, 250);
 }
 
-// ══════════════════════════════════════════════════
 //  SETTINGS — apply / persist
-// ══════════════════════════════════════════════════
-
 const FONT_MAP = {
   "sans-serif": "'Manrope', 'Arial', sans-serif",
   serif: "Georgia, 'Times New Roman', serif",
@@ -525,10 +483,7 @@ function savePassword() {
   showToast("Password changed successfully!");
 }
 
-// ══════════════════════════════════════════════════
 //  SETTINGS VIEW ROUTING
-// ══════════════════════════════════════════════════
-
 function openSettings(panel) {
   currentView = "settings";
   notesView.style.display = "none";
@@ -568,14 +523,7 @@ function switchSettingsPanel(panelId) {
     .forEach((p) => p.classList.toggle("active", p.id === `panel-${panelId}`));
 }
 
-// ══════════════════════════════════════════════════
 //  GEOLOCATION — attach location tag to a note
-// ══════════════════════════════════════════════════
-
-/**
- * Request geolocation, reverse-geocode to city name (via nominatim),
- * then add a location tag to the active note.
- */
 function attachLocationToNote() {
   if (!navigator.geolocation) {
     showToast(
@@ -608,7 +556,7 @@ function attachLocationToNote() {
           geo?.address?.county;
         if (city) locationLabel = city;
       } catch {
-        /* keep coords if reverse geocoding fails */
+        console.error("Failed to reverse geocode location.");
       }
 
       // Add location as a tag on the active note (or new note in progress)
@@ -658,10 +606,7 @@ function attachLocationToNote() {
   );
 }
 
-// ══════════════════════════════════════════════════
 //  RENDER
-// ══════════════════════════════════════════════════
-
 function renderAll() {
   renderSidebarTags();
   renderNotesList();
@@ -734,10 +679,7 @@ function updateTitles() {
     );
 }
 
-// ══════════════════════════════════════════════════
 //  DETAIL PANEL
-// ══════════════════════════════════════════════════
-
 function openNote(noteId) {
   const note = notes.find((n) => n.id === noteId);
   if (!note) return;
@@ -847,9 +789,7 @@ function renderActionsPanel(note) {
   }
 }
 
-// ══════════════════════════════════════════════════
 //  VIEW SWITCHING
-// ══════════════════════════════════════════════════
 
 function setView(view) {
   currentView = view;
@@ -873,9 +813,7 @@ function setView(view) {
   renderAll();
 }
 
-// ══════════════════════════════════════════════════
 //  CRUD
-// ══════════════════════════════════════════════════
 
 function saveNote() {
   const title = detailTitleInput.value.trim();
@@ -994,9 +932,7 @@ function deleteNote(noteId) {
   showToast("Note permanently deleted.");
 }
 
-// ══════════════════════════════════════════════════
 //  DRAFT AUTO-SAVE  (sessionStorage, debounced)
-// ══════════════════════════════════════════════════
 
 function scheduleDraftSave() {
   clearTimeout(draftTimer);
@@ -1009,9 +945,7 @@ function scheduleDraftSave() {
   }, 800); // 800 ms debounce
 }
 
-// ══════════════════════════════════════════════════
 //  EVENT LISTENERS
-// ══════════════════════════════════════════════════
 
 /* ── Sidebar nav ── */
 document.querySelectorAll(".sidebar-nav-item[data-view]").forEach((item) =>
@@ -1196,7 +1130,5 @@ window
     if (appSettings.colorTheme === "system") applySettings();
   });
 
-// ══════════════════════════════════════════════════
 //  INIT
-// ══════════════════════════════════════════════════
 loadNotes();

@@ -1,18 +1,8 @@
-/**
- * auth.js — AuthService
- * Shared authentication logic used by login.html, signup.html, and index.html.
- * Users are stored in localStorage. Session is tracked in sessionStorage.
- *
- * Storage keys:
- *   localStorage  → 'notes_users'    : array of { email, passwordHash, createdAt }
- *   sessionStorage → 'notes_session' : { email, loginAt }
- */
-
 const AuthService = (() => {
   const USERS_KEY = "notes_users";
   const SESSION_KEY = "notes_session";
 
-  // ── Simple deterministic hash (not cryptographic — for demo only) ──
+  // ── Simple deterministic hash (not cryptographic ) ──
   function hashPassword(password) {
     let hash = 0;
     for (let i = 0; i < password.length; i++) {
@@ -59,15 +49,15 @@ const AuthService = (() => {
         JSON.stringify({ email, loginAt: new Date().toISOString() }),
       );
     } catch {
-      /* session storage full — proceed without session */
+      console.error(
+        "Failed to set session. Session storage may be unavailable.",
+      );
     }
   }
 
   function clearSession() {
     sessionStorage.removeItem(SESSION_KEY);
   }
-
-  // ── Public API ──
 
   /**
    * Register a new user.
