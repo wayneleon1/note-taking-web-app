@@ -295,7 +295,7 @@ body {
 }
 .sidebar-tags-section {
   flex: 1;
-  min-height: 0;
+  /* min-height: 0; */
 }
 .sidebar-section-title {
   font-size: 11px;
@@ -1013,8 +1013,6 @@ body {
    MOBILE  < 768px
 ══════════════════════════════════════════ */
 @media (max-width: 767px) {
-  /* Body becomes a flex column so .bottom-nav (sibling of .app-shell)
-     is rendered below it and not clipped by overflow:hidden */
   body {
     display: flex;
     flex-direction: column;
@@ -1057,7 +1055,7 @@ body {
     padding: 0 16px 90px;
   }
 
-  /* ── Bottom nav: must be display:flex (re-assert from desktop none) ── */
+  /* ── Bottom nav */
   .bottom-nav {
     display: flex;
     align-items: center;
@@ -1150,7 +1148,7 @@ body {
     top: 56px; /* below topbar */
     left: 0;
     right: 0;
-    bottom: 62px; /* above bottom nav (~62px tall on mobile) */
+    bottom: 62px;
     z-index: 30;
     background: var(--color-neutral-0);
     overflow: hidden;
@@ -1673,4 +1671,139 @@ body {
 .detail-title.input-error {
   border-bottom: 2px solid var(--color-red-500);
   color: var(--color-red-500);
+}
+
+/* ─────────────────────────────────────────
+   EXPORT / IMPORT — Sidebar section (desktop)
+───────────────────────────────────────── */
+.sidebar-export-import {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: 4px;
+}
+
+.sidebar-data-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-neutral-700);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: "Manrope", "Arial", sans-serif;
+  text-align: left;
+  width: 100%;
+  transition:
+    background-color 0.12s ease,
+    color 0.12s ease;
+}
+.sidebar-data-btn:hover {
+  background-color: var(--color-neutral-100);
+  color: var(--color-neutral-950);
+}
+.sidebar-data-btn .nav-icon {
+  width: 18px;
+  height: 18px;
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+.sidebar-data-btn:hover .nav-icon {
+  opacity: 1;
+}
+
+/* ─────────────────────────────────────────
+   EXPORT / IMPORT — Settings panel cards
+───────────────────────────────────────── */
+.export-import-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.ei-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 20px;
+  border: 1.5px solid var(--color-neutral-200);
+  border-radius: 12px;
+  background: var(--color-neutral-0);
+  transition: border-color 0.12s ease;
+}
+.ei-card:hover {
+  border-color: var(--color-neutral-300);
+}
+
+.ei-card-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--color-neutral-100);
+  border: 1.5px solid var(--color-neutral-200);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+  flex-shrink: 0;
+}
+.ei-card-icon img {
+  width: 20px;
+  height: 20px;
+  opacity: 0.65;
+}
+
+.ei-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.ei-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-neutral-950);
+}
+.ei-card-desc {
+  font-size: 13px;
+  color: var(--color-neutral-500);
+  line-height: 1.6;
+}
+.ei-card-desc code {
+  font-family: "Courier New", monospace;
+  font-size: 12px;
+  background: var(--color-neutral-100);
+  padding: 1px 5px;
+  border-radius: 4px;
+  color: var(--color-neutral-700);
+}
+
+/* ─────────────────────────────────────────
+   TOPBAR export/import icon buttons
+   (only shown on tablet/mobile via media query)
+───────────────────────────────────────── */
+.topbar-export-btn,
+.topbar-import-btn {
+  display: none; /* hidden by default; shown on ≤1023px */
+  flex-shrink: 0;
+}
+
+@media (max-width: 1023px) {
+  .topbar-export-btn,
+  .topbar-import-btn {
+    display: inline-flex !important;
+  }
+}
+
+/* On desktop these are in the sidebar, so hide them in settings nav too */
+@media (min-width: 1024px) {
+  /* Hide export-import settings nav entry on desktop — sidebar handles it */
+  .settings-nav-item[data-setting="export-import"] {
+    display: none;
+  }
 }

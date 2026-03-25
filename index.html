@@ -58,7 +58,6 @@
         </nav>
 
         <!-- Tags -->
-
         <div class="sidebar-tags-section">
           <hr
             style="
@@ -69,6 +68,46 @@
           />
           <p class="sidebar-section-title">Tags</p>
           <nav class="sidebar-tags" id="sidebar-tags" aria-label="Tags"></nav>
+        </div>
+
+        <!-- ── Export / Import (sidebar, desktop) ── -->
+        <div class="sidebar-export-import">
+          <hr
+            style="
+              margin-bottom: 12px;
+              border: none;
+              border-top: 1px solid #e0e4ea;
+            "
+          />
+          <p class="sidebar-section-title">Data</p>
+          <button
+            class="sidebar-data-btn"
+            id="btn-export-notes"
+            aria-label="Export all notes as JSON"
+          >
+            <img
+              src="./assets/images/icon-archive.svg"
+              alt=""
+              class="nav-icon"
+            />
+            Export Notes
+          </button>
+          <button
+            class="sidebar-data-btn"
+            id="btn-import-notes"
+            aria-label="Import notes from JSON file"
+          >
+            <img src="./assets/images/icon-plus.svg" alt="" class="nav-icon" />
+            Import Notes
+          </button>
+          <!-- Hidden file input for import -->
+          <input
+            type="file"
+            id="import-file-input"
+            accept=".json,application/json"
+            style="display: none"
+            aria-hidden="true"
+          />
         </div>
       </aside>
       <!-- /sidebar -->
@@ -92,6 +131,25 @@
               aria-label="Search notes"
             />
           </div>
+          <!-- Export/Import icon buttons in topbar (tablet/mobile) -->
+          <button
+            class="icon-btn topbar-export-btn"
+            id="btn-export-notes-topbar"
+            aria-label="Export notes"
+            title="Export notes"
+            style="display: none"
+          >
+            <img src="./assets/images/icon-archive.svg" alt="" />
+          </button>
+          <button
+            class="icon-btn topbar-import-btn"
+            id="btn-import-notes-topbar"
+            aria-label="Import notes"
+            title="Import notes"
+            style="display: none"
+          >
+            <img src="./assets/images/icon-plus.svg" alt="" />
+          </button>
           <button
             class="icon-btn topbar-settings"
             id="btn-open-settings"
@@ -300,6 +358,25 @@
                 class="settings-nav-chevron active-only"
               />
             </a>
+
+            <!-- ── Export / Import in Settings nav (tablet/mobile) ── -->
+            <div class="settings-nav-divider"></div>
+            <a href="#" class="settings-nav-item" data-setting="export-import">
+              <span class="settings-nav-left">
+                <img
+                  src="./assets/images/icon-archive.svg"
+                  alt=""
+                  class="nav-icon"
+                />
+                Export &amp; Import
+              </span>
+              <img
+                src="./assets/images/icon-chevron-right.svg"
+                alt=""
+                class="settings-nav-chevron active-only"
+              />
+            </a>
+
             <div class="settings-nav-divider"></div>
             <a
               href="#"
@@ -567,6 +644,61 @@
                 </button>
               </div>
             </div>
+
+            <!-- ── Export & Import ── -->
+            <div class="settings-panel" id="panel-export-import">
+              <h2 class="settings-panel-title">Export &amp; Import</h2>
+              <p class="settings-panel-subtitle">
+                Back up or restore your notes using JSON files.
+              </p>
+
+              <div class="export-import-cards">
+                <!-- Export card -->
+                <div class="ei-card">
+                  <div class="ei-card-icon">
+                    <img src="./assets/images/icon-archive.svg" alt="" />
+                  </div>
+                  <div class="ei-card-text">
+                    <span class="ei-card-title">Export Notes</span>
+                    <span class="ei-card-desc"
+                      >Download all your notes as a <code>.json</code> file.
+                      Includes all tags, content, and archive status.</span
+                    >
+                  </div>
+                  <div class="settings-actions" style="margin-top: 16px">
+                    <button
+                      class="btn btn-primary"
+                      id="btn-export-notes-settings"
+                    >
+                      Export All Notes
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Import card -->
+                <div class="ei-card">
+                  <div class="ei-card-icon">
+                    <img src="./assets/images/icon-plus.svg" alt="" />
+                  </div>
+                  <div class="ei-card-text">
+                    <span class="ei-card-title">Import Notes</span>
+                    <span class="ei-card-desc"
+                      >Import notes from a <code>.json</code> file. Duplicates
+                      are automatically skipped.</span
+                    >
+                  </div>
+                  <div class="settings-actions" style="margin-top: 16px">
+                    <button
+                      class="btn btn-secondary"
+                      id="btn-import-notes-settings"
+                    >
+                      Choose JSON File
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- /panel-export-import -->
           </div>
           <!-- /settings-content -->
         </div>
