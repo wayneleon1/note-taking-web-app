@@ -77,7 +77,12 @@ let currentView = "all";
 let activeNoteId = null;
 let isNewNote = false;
 let searchQuery = "";
-let draftTimer = null; // debounce timer for auto-saving draft
+let draftTimer = null;
+
+// ── Categories state ──
+// currentView can now also be "cat:<categoryId>"
+// We alias CategoriesModule for brevity
+const CM = window.CategoriesModule;
 
 let appSettings = {
   colorTheme: lsGet(STORAGE_KEYS.colorTheme, "light"),
@@ -111,12 +116,14 @@ const settingsView = document.getElementById("settings-view");
 
 //  DATA — LOAD / SAVE
 async function loadNotes() {
+  // Load categories first
+  CM.loadCategories();
+
   const stored = lsGet(STORAGE_KEYS.notes, null);
 
   if (stored && Array.isArray(stored) && stored.length > 0) {
     notes = stored;
   } else {
-    // First run — seed from data.json
     try {
       const res = await fetch("data.json");
       if (!res.ok) throw new Error("No data.json");
@@ -125,25 +132,22 @@ async function loadNotes() {
     } catch {
       notes = getFallbackNotes();
     }
-    persistNotes(); // write seed data to localStorage
+    persistNotes();
   }
 
   applySettings();
   renderAll();
-  restoreDraftIfAny(); // sessionStorage draft check
+  restoreDraftIfAny();
 }
 
-/** Write current notes array to localStorage */
 function persistNotes() {
   lsSet(STORAGE_KEYS.notes, notes);
 }
 
-/** Check sessionStorage for an unsaved draft and offer to restore it */
 function restoreDraftIfAny() {
   const draft = loadDraft();
   if (!draft || !draft.title) return;
 
-  // Show draft banner
   const banner = document.createElement("div");
   banner.className = "draft-banner";
   banner.innerHTML = `
@@ -157,7 +161,6 @@ function restoreDraftIfAny() {
 
   document.getElementById("btn-restore-draft").addEventListener("click", () => {
     banner.remove();
-    // Open a new note form pre-filled with draft
     isNewNote = true;
     activeNoteId = null;
     detailTitleInput.value = draft.title;
@@ -168,6 +171,7 @@ function restoreDraftIfAny() {
     updateMobileActionIcons(false, false);
     actionsPanel.innerHTML = "";
     showDetailPanel();
+    renderCategoryPickerForActive();
     document
       .querySelectorAll(".note-card")
       .forEach((c) => c.classList.remove("active"));
@@ -304,6 +308,9 @@ function getFilteredNotes() {
     if (currentView === "archived") return n.isArchived;
     if (currentView.startsWith("tag:"))
       return n.tags.includes(currentView.slice(4)) && !n.isArchived;
+    // ── Category filter ──
+    if (currentView.startsWith("cat:"))
+      return n.categoryId === currentView.slice(4) && !n.isArchived;
     return true;
   });
   if (searchQuery.trim()) {
@@ -353,7 +360,7 @@ function showToast(msg, link = null, onLink = null, type = "success") {
   }
 
   toastEl.style.display = "block";
-  toastEl.getBoundingClientRect(); // force reflow
+  toastEl.getBoundingClientRect();
   toastEl.classList.add("toast--visible");
   clearTimeout(toastEl._timer);
   toastEl._timer = setTimeout(dismissToast, 4000);
@@ -523,7 +530,7 @@ function switchSettingsPanel(panelId) {
     .forEach((p) => p.classList.toggle("active", p.id === `panel-${panelId}`));
 }
 
-//  GEOLOCATION — attach location tag to a note
+//  GEOLOCATION
 function attachLocationToNote() {
   if (!navigator.geolocation) {
     showToast(
@@ -542,7 +549,6 @@ function attachLocationToNote() {
       const { latitude, longitude } = pos.coords;
       let locationLabel = `${latitude.toFixed(3)},${longitude.toFixed(3)}`;
 
-      // Try to resolve city name via Nominatim (OpenStreetMap)
       try {
         const resp = await fetch(
           `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
@@ -559,7 +565,6 @@ function attachLocationToNote() {
         console.error("Failed to reverse geocode location.");
       }
 
-      // Add location as a tag on the active note (or new note in progress)
       const tag = `📍 ${locationLabel}`;
 
       if (activeNoteId !== null) {
@@ -567,7 +572,6 @@ function attachLocationToNote() {
         if (idx !== -1 && !notes[idx].tags.includes(tag)) {
           notes[idx].tags.push(tag);
           notes[idx].lastEdited = new Date().toISOString();
-          // Sync to detail tags input if note is open
           detailTagsInput.value = notes[idx].tags.join(", ");
           persistNotes();
           renderAll();
@@ -576,7 +580,6 @@ function attachLocationToNote() {
           showToast("Location already added to this note.");
         }
       } else if (isNewNote) {
-        // Add to new-note draft
         const existing = detailTagsInput.value.trim();
         detailTagsInput.value = existing ? `${existing}, ${tag}` : tag;
         showToast(`Location added: ${locationLabel}`);
@@ -606,9 +609,50 @@ function attachLocationToNote() {
   );
 }
 
+//  ── CATEGORIES: helpers ──────────────────────────
+
+/** Render the category picker inside the detail panel */
+function renderCategoryPickerForActive() {
+  const note =
+    activeNoteId !== null ? notes.find((n) => n.id === activeNoteId) : null;
+  const currentCatId = note ? note.categoryId || null : null;
+
+  CM.renderCategoryPicker(currentCatId, (catId) => {
+    if (activeNoteId !== null) {
+      CM.assignCategory(activeNoteId, catId, notes, persistNotes);
+      renderAll();
+      const updated = notes.find((n) => n.id === activeNoteId);
+      if (updated) renderActionsPanel(updated);
+      // Re-render picker to reflect new selection
+      renderCategoryPickerForActive();
+    } else if (isNewNote) {
+      // For new notes, store temporarily on a transient object
+      // We'll attach categoryId on save
+      window._pendingNewNoteCatId = catId;
+      renderCategoryPickerForActive_newNote(catId);
+    }
+  });
+}
+
+function renderCategoryPickerForActive_newNote(catId) {
+  CM.renderCategoryPicker(catId, (newCatId) => {
+    window._pendingNewNoteCatId = newCatId;
+    renderCategoryPickerForActive_newNote(newCatId);
+  });
+}
+
+/** Get the category view label for titles */
+function getCategoryViewLabel() {
+  if (!currentView.startsWith("cat:")) return null;
+  const catId = currentView.slice(4);
+  const cat = CM.getCategoryById(catId);
+  return cat ? "📁 " + cat.name : "Category";
+}
+
 //  RENDER
 function renderAll() {
   renderSidebarTags();
+  renderSidebarCategories();
   renderNotesList();
   updateTitles();
 }
@@ -634,17 +678,25 @@ function renderSidebarTags() {
   );
 }
 
+function renderSidebarCategories() {
+  CM.renderSidebarCategories(currentView, (view) => setView(view));
+}
+
 function renderNotesList() {
   const filtered = getFilteredNotes();
   notesList.innerHTML = "";
   if (filtered.length === 0) {
-    notesList.innerHTML = `<div class="notes-empty-state"><p>${esc(
-      currentView === "archived"
-        ? "No archived notes found."
-        : searchQuery
-          ? "No notes match your search."
-          : "You don't have any notes yet. Start a new note to capture your thoughts and ideas.",
-    )}</p></div>`;
+    let emptyMsg =
+      "You don't have any notes yet. Start a new note to capture your thoughts and ideas.";
+    if (currentView === "archived") emptyMsg = "No archived notes found.";
+    else if (searchQuery) emptyMsg = "No notes match your search.";
+    else if (currentView.startsWith("cat:")) {
+      const cat = CM.getCategoryById(currentView.slice(4));
+      emptyMsg = cat
+        ? `No notes in "${cat.name}" yet. Assign this category to a note to see it here.`
+        : "No notes in this category.";
+    }
+    notesList.innerHTML = `<div class="notes-empty-state"><p>${esc(emptyMsg)}</p></div>`;
     return;
   }
   filtered.forEach((note) => {
@@ -652,9 +704,14 @@ function renderNotesList() {
     card.className = "note-card" + (note.id === activeNoteId ? " active" : "");
     card.setAttribute("role", "listitem");
     card.dataset.noteId = note.id;
+
+    // Category badge for card
+    const catBadgeHTML = CM.getCategoryBadgeHTML(note);
+
     card.innerHTML = `
       <div class="note-card-inner">
         <h3 class="note-card-title">${esc(note.title)}</h3>
+        ${catBadgeHTML ? `<div class="note-card-category">${catBadgeHTML}</div>` : ""}
         <div class="note-card-tags">${note.tags.map((t) => `<span class="tag-badge">${esc(t)}</span>`).join("")}</div>
         <p class="note-card-date">${formatDate(note.lastEdited)}</p>
       </div>`;
@@ -667,6 +724,9 @@ function updateTitles() {
   let label = "All Notes";
   if (currentView === "archived") label = "Archived Notes";
   else if (currentView.startsWith("tag:")) label = currentView.slice(4);
+  else if (currentView.startsWith("cat:")) {
+    label = getCategoryViewLabel() || "Category";
+  }
   topbarTitle.textContent = label;
   panelPageTitle.textContent = label;
   panelPageSubtitle.style.display =
@@ -685,6 +745,7 @@ function openNote(noteId) {
   if (!note) return;
   activeNoteId = noteId;
   isNewNote = false;
+  window._pendingNewNoteCatId = undefined;
 
   detailTitleInput.value = note.title;
   detailTagsInput.value = note.tags.join(", ");
@@ -698,12 +759,14 @@ function openNote(noteId) {
   showDetailPanel();
   renderNotesList();
   renderActionsPanel(note);
-  clearDraft(); // opening a saved note clears any orphaned draft
+  renderCategoryPickerForActive();
+  clearDraft();
 }
 
 function openNewNote() {
   isNewNote = true;
   activeNoteId = null;
+  window._pendingNewNoteCatId = undefined;
   detailTitleInput.value = "";
   detailTagsInput.value = "";
   detailContentArea.value = "";
@@ -712,6 +775,7 @@ function openNewNote() {
   updateMobileActionIcons(false, false);
   actionsPanel.innerHTML = "";
   showDetailPanel();
+  renderCategoryPickerForActive();
   document
     .querySelectorAll(".note-card")
     .forEach((c) => c.classList.remove("active"));
@@ -843,10 +907,12 @@ function saveNote() {
       content,
       lastEdited: now,
       isArchived: false,
+      categoryId: window._pendingNewNoteCatId || null,
     };
     notes.unshift(newNote);
     activeNoteId = newNote.id;
     isNewNote = false;
+    window._pendingNewNoteCatId = undefined;
   } else {
     const idx = notes.findIndex((n) => n.id === activeNoteId);
     if (idx !== -1)
@@ -854,11 +920,14 @@ function saveNote() {
   }
 
   persistNotes();
-  clearDraft(); // successfully saved — remove draft
+  clearDraft();
   detailDateSpan.textContent = formatDate(now);
   renderAll();
   const saved = notes.find((n) => n.id === activeNoteId);
-  if (saved) renderActionsPanel(saved);
+  if (saved) {
+    renderActionsPanel(saved);
+    renderCategoryPickerForActive();
+  }
   showToast("Note saved successfully!");
 }
 
@@ -866,6 +935,7 @@ function cancelEdit() {
   if (isNewNote) {
     isNewNote = false;
     activeNoteId = null;
+    window._pendingNewNoteCatId = undefined;
     hideDetailPanel();
     clearDraft();
   } else if (activeNoteId !== null) openNote(activeNoteId);
@@ -932,7 +1002,7 @@ function deleteNote(noteId) {
   showToast("Note permanently deleted.");
 }
 
-//  DRAFT AUTO-SAVE  (sessionStorage, debounced)
+//  DRAFT AUTO-SAVE
 
 function scheduleDraftSave() {
   clearTimeout(draftTimer);
@@ -940,10 +1010,55 @@ function scheduleDraftSave() {
     const title = detailTitleInput.value.trim();
     const tags = detailTagsInput.value.trim();
     const content = detailContentArea.value.trim();
-    // Only save draft when actively writing a new note or editing
     if (title || content) saveDraft(title, tags, content);
-  }, 800); // 800 ms debounce
+  }, 800);
 }
+
+//  ── CATEGORIES: Event Listeners ─────────────
+
+// Handle category delete event dispatched by categories.js
+document.addEventListener("categories:delete", (e) => {
+  CM.deleteCategory(e.detail.id, notes, persistNotes);
+  renderAll();
+  // Re-render picker if a note is open
+  if (activeNoteId !== null) renderCategoryPickerForActive();
+});
+
+// Sidebar "+" button to open category modal
+document
+  .getElementById("sidebar-cat-add-btn")
+  ?.addEventListener("click", () => {
+    CM.openCategoryModal(() => {
+      renderAll();
+      if (activeNoteId !== null) renderCategoryPickerForActive();
+    });
+  });
+
+// Category modal close button
+document
+  .getElementById("modal-category-close")
+  ?.addEventListener("click", () => {
+    CM.closeCategoryModal();
+  });
+
+// Close category modal on overlay click
+document
+  .getElementById("modal-category-overlay")
+  ?.addEventListener("click", (e) => {
+    if (e.target === document.getElementById("modal-category-overlay")) {
+      CM.closeCategoryModal();
+    }
+  });
+
+// Bottom nav "Categories" button (mobile/tablet)
+document
+  .getElementById("bottom-nav-categories")
+  ?.addEventListener("click", () => {
+    CM.openCategoryModal(() => {
+      renderAll();
+      if (activeNoteId !== null) renderCategoryPickerForActive();
+    });
+  });
 
 //  EVENT LISTENERS
 
@@ -963,6 +1078,7 @@ document.querySelectorAll(".bottom-nav-item").forEach((item) => {
       openSettings();
       return;
     }
+    if (view === "categories") return; // handled by dedicated listener above
     if (view === "search" || view === "tags") return;
     setView(view);
   });
@@ -1057,7 +1173,7 @@ mobileArchiveBtn.addEventListener("click", () => {
   else confirmArchive(activeNoteId);
 });
 
-/* ── Draft auto-save: fire on every keystroke in title/tags/content ── */
+/* ── Draft auto-save ── */
 [detailTitleInput, detailTagsInput, detailContentArea].forEach((el) =>
   el.addEventListener("input", scheduleDraftSave),
 );
@@ -1108,8 +1224,13 @@ document.getElementById("toast-close").addEventListener("click", dismissToast);
 /* ── Keyboard ── */
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
+    const catModal = document.getElementById("modal-category-overlay");
     const delModal = document.getElementById("modal-delete-overlay");
     const archModal = document.getElementById("modal-archive-overlay");
+    if (catModal && catModal.style.display !== "none") {
+      CM.closeCategoryModal();
+      return;
+    }
     if (delModal.style.display !== "none") {
       closeDeleteModal();
       return;
