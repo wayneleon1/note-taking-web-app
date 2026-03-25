@@ -1013,8 +1013,6 @@ body {
    MOBILE  < 768px
 ══════════════════════════════════════════ */
 @media (max-width: 767px) {
-  /* Body becomes a flex column so .bottom-nav (sibling of .app-shell)
-     is rendered below it and not clipped by overflow:hidden */
   body {
     display: flex;
     flex-direction: column;
@@ -1057,7 +1055,7 @@ body {
     padding: 0 16px 90px;
   }
 
-  /* ── Bottom nav: must be display:flex (re-assert from desktop none) ── */
+  /* ── Bottom nav */
   .bottom-nav {
     display: flex;
     align-items: center;
@@ -1150,7 +1148,7 @@ body {
     top: 56px; /* below topbar */
     left: 0;
     right: 0;
-    bottom: 62px; /* above bottom nav (~62px tall on mobile) */
+    bottom: 62px;
     z-index: 30;
     background: var(--color-neutral-0);
     overflow: hidden;
