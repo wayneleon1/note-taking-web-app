@@ -239,7 +239,7 @@ body {
   flex-direction: column;
   overflow-y: auto;
   padding: 20px 16px;
-  gap: 24px;
+  gap: 16px;
 }
 .sidebar-logo {
   padding: 4px 8px;
@@ -1279,7 +1279,6 @@ body {
 }
 
 .settings-nav-item--logout {
-  color: var(--color-red-500);
   margin-top: 4px;
 }
 .settings-nav-item--logout:hover {

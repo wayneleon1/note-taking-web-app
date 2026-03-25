@@ -135,7 +135,7 @@
     <script src="auth.js"></script>
     <script>
       // Redirect if already logged in
-      if (AuthService.isLoggedIn()) window.location.href = "index.html";
+      if (AuthService.isLoggedIn()) window.location.href = "/index.html";
 
       // Password toggle
       document
@@ -177,7 +177,7 @@
           document.getElementById("auth-error").style.display = "none";
 
           if (result.success) {
-            window.location.href = "index.html";
+            window.location.href = "/index.html";
           } else {
             if (result.field === "email") {
               document
@@ -205,7 +205,7 @@
         .getElementById("btn-google-login")
         .addEventListener("click", function () {
           const result = AuthService.loginWithGoogle();
-          if (result.success) window.location.href = "index.html";
+          if (result.success) window.location.href = "/index.html";
         });
     </script>
   </body>

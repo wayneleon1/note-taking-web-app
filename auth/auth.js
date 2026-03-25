@@ -182,7 +182,7 @@ const AuthService = (() => {
     return s ? s.email : null;
   }
 
-  /** Log out: clear session (keeps localStorage notes/users intact) */
+  /** Log out: clear session */
   function logout() {
     clearSession();
   }
