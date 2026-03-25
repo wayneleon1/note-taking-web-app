@@ -3,6 +3,9 @@ if (typeof AuthService !== "undefined" && !AuthService.isLoggedIn()) {
   window.location.href = "auth/login.html";
 }
 
+import { exportNotes } from "./export.js";
+import { importNotesFromFile } from "./import.js";
+
 //  STORAGE KEYS
 const STORAGE_KEYS = {
   notes: "notes_data",
@@ -606,6 +609,41 @@ function attachLocationToNote() {
   );
 }
 
+// ═══════════════════════════════════════════
+//  EXPORT / IMPORT
+// ═══════════════════════════════════════════
+
+function handleExport() {
+  const result = exportNotes(notes);
+  showToast(result.message, null, null, result.success ? "success" : "error");
+}
+
+function handleImportClick() {
+  // Trigger the hidden file input
+  document.getElementById("import-file-input").click();
+}
+
+async function handleImportFileChange(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  // Reset so the same file can be re-selected if needed
+  e.target.value = "";
+
+  const result = await importNotesFromFile(file, notes);
+
+  if (!result.success) {
+    showToast(result.message, null, null, "error");
+    return;
+  }
+
+  // Commit the merged notes to state + storage
+  notes = result.merged;
+  persistNotes();
+  renderAll();
+  showToast(result.message);
+}
+
 //  RENDER
 function renderAll() {
   renderSidebarTags();
@@ -1104,6 +1142,36 @@ document
 
 /* ── Toast close ── */
 document.getElementById("toast-close").addEventListener("click", dismissToast);
+
+/* ── Export / Import ── */
+// Sidebar (desktop)
+document
+  .getElementById("btn-export-notes")
+  .addEventListener("click", handleExport);
+document
+  .getElementById("btn-import-notes")
+  .addEventListener("click", handleImportClick);
+
+// Topbar icon buttons (tablet/mobile)
+document
+  .getElementById("btn-export-notes-topbar")
+  .addEventListener("click", handleExport);
+document
+  .getElementById("btn-import-notes-topbar")
+  .addEventListener("click", handleImportClick);
+
+// Settings panel (all breakpoints)
+document
+  .getElementById("btn-export-notes-settings")
+  .addEventListener("click", handleExport);
+document
+  .getElementById("btn-import-notes-settings")
+  .addEventListener("click", handleImportClick);
+
+// Hidden file input (shared by all import triggers)
+document
+  .getElementById("import-file-input")
+  .addEventListener("change", handleImportFileChange);
 
 /* ── Keyboard ── */
 document.addEventListener("keydown", (e) => {
