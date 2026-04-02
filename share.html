@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="./assets/images/favicon-32x32.png"
+    />
+    <title>Shared Note</title>
+    <link rel="stylesheet" href="styles/index.css" />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --color-neutral-950: #0e1219;
+        --color-neutral-900: #191925;
+        --color-neutral-800: #232530;
+        --color-neutral-700: #2b3038;
+        --color-neutral-600: #525868;
+        --color-neutral-500: #717784;
+        --color-neutral-400: #99a0ae;
+        --color-neutral-300: #cacfd8;
+        --color-neutral-200: #e0e4ea;
+        --color-neutral-100: #f3f5f8;
+        --color-neutral-50: #f5f7fa;
+        --color-neutral-0: #ffffff;
+        --color-blue-700: #2547d0;
+        --color-blue-500: #335cff;
+        --color-blue-50: #ebf1ff;
+        --color-red-500: #f93748;
+      }
+
+      html,
+      body {
+        height: 100%;
+        background-color: var(--color-neutral-100);
+        color: var(--color-neutral-950);
+        font-family: "Arial", sans-serif;
+        font-size: 14px;
+      }
+
+      /* ── Shell ── */
+      .share-shell {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* ── Top bar ── */
+      .share-topbar {
+        background: var(--color-neutral-0);
+        border-bottom: 1px solid var(--color-neutral-200);
+        padding: 0 24px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+        gap: 16px;
+      }
+      .share-topbar-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+        color: inherit;
+      }
+      .share-topbar-brand img {
+        height: 26px;
+        width: auto;
+      }
+      .share-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 10px;
+        border-radius: 20px;
+        background: var(--color-neutral-100);
+        border: 1px solid var(--color-neutral-200);
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--color-neutral-500);
+        letter-spacing: 0.02em;
+      }
+      .share-badge svg {
+        width: 12px;
+        height: 12px;
+        opacity: 0.7;
+      }
+      .share-topbar-cta {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border-radius: 8px;
+        background: var(--color-blue-500);
+        color: var(--color-neutral-0);
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.15s;
+        white-space: nowrap;
+      }
+      .share-topbar-cta:hover {
+        background: var(--color-blue-700);
+      }
+
+      /* ── Main content ── */
+      .share-main {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        padding: 40px 24px 60px;
+      }
+      .share-card {
+        background: var(--color-neutral-0);
+        border: 1px solid var(--color-neutral-200);
+        border-radius: 14px;
+        width: 100%;
+        max-width: 720px;
+        padding: 40px 44px;
+        box-shadow: 0 2px 16px rgba(0, 0, 0, 0.05);
+      }
+
+      /* ── Note title ── */
+      .share-note-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--color-neutral-950);
+        line-height: 1.25;
+        margin-bottom: 20px;
+      }
+
+      /* ── Meta row ── */
+      .share-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--color-neutral-200);
+        margin-bottom: 28px;
+      }
+      .share-meta-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+      }
+      .share-meta-icon {
+        width: 15px;
+        height: 15px;
+        opacity: 0.45;
+        flex-shrink: 0;
+      }
+      .share-meta-key {
+        width: 90px;
+        color: var(--color-neutral-500);
+        font-weight: 500;
+        flex-shrink: 0;
+      }
+      .share-meta-value {
+        color: var(--color-neutral-700);
+        font-weight: 500;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+        flex: 1;
+      }
+
+      /* ── Tag badge ── */
+      .tag-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 10px;
+        border-radius: 4px;
+        border: 1px solid var(--color-neutral-300);
+        background: var(--color-neutral-200);
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--color-neutral-700);
+        white-space: nowrap;
+      }
+
+      /* ── Note content ── */
+      .share-note-content {
+        font-size: 14px;
+        line-height: 1.8;
+        color: var(--color-neutral-800);
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      /* ── Error / loading states ── */
+      .share-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        min-height: 300px;
+        color: var(--color-neutral-500);
+        text-align: center;
+      }
+      .share-state-icon {
+        font-size: 36px;
+        opacity: 0.4;
+        line-height: 1;
+      }
+      .share-state h2 {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--color-neutral-700);
+      }
+      .share-state p {
+        font-size: 14px;
+        max-width: 340px;
+        line-height: 1.6;
+      }
+
+      /* ── Footer ── */
+      .share-footer {
+        text-align: center;
+        padding: 20px 24px 32px;
+        font-size: 12px;
+        color: var(--color-neutral-400);
+      }
+      .share-footer a {
+        color: var(--color-neutral-500);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+
+      @media (max-width: 600px) {
+        .share-topbar {
+          padding: 0 16px;
+        }
+        .share-topbar-brand span {
+          display: none;
+        }
+        .share-main {
+          padding: 20px 16px 40px;
+        }
+        .share-card {
+          padding: 24px 20px;
+        }
+        .share-note-title {
+          font-size: 22px;
+        }
+        .share-topbar-cta span {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="share-shell">
+      <!-- Top bar -->
+      <header class="share-topbar">
+        <a href="index.html" class="share-topbar-brand">
+          <img src="./assets/images/logo.svg" alt="Notes logo" />
+        </a>
+        <div class="share-badge">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          Read only
+        </div>
+        <a href="index.html" class="share-topbar-cta">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M12 5v14M5 12l7-7 7 7" />
+          </svg>
+          <span>Open App</span>
+        </a>
+      </header>
+
+      <!-- Main -->
+      <main class="share-main">
+        <div class="share-card" id="share-card">
+          <div class="share-state" id="share-loading">
+            <div class="share-state-icon">⋯</div>
+            <p>Loading note…</p>
+          </div>
+        </div>
+      </main>
+
+      <!-- Footer -->
+      <footer class="share-footer">
+        Shared via <a href="index.html">Notes App</a> · Read-only view
+      </footer>
+    </div>
+
+    <script>
+      function esc(str) {
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function formatDate(iso) {
+        if (!iso) return "—";
+        return new Date(iso).toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        });
+      }
+
+      function renderNote(note) {
+        const card = document.getElementById("share-card");
+        const tagsHtml =
+          note.tags && note.tags.length
+            ? note.tags
+                .map((t) => `<span class="tag-badge">${esc(t)}</span>`)
+                .join("")
+            : '<span style="color:var(--color-neutral-400);font-size:13px">No tags</span>';
+
+        card.innerHTML = `
+          <h1 class="share-note-title">${esc(note.title)}</h1>
+          <div class="share-meta">
+            <div class="share-meta-row">
+              <svg class="share-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>
+              </svg>
+              <span class="share-meta-key">Tags</span>
+              <span class="share-meta-value">${tagsHtml}</span>
+            </div>
+            <div class="share-meta-row">
+              <svg class="share-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <span class="share-meta-key">Last edited</span>
+              <span class="share-meta-value">${formatDate(note.lastEdited)}</span>
+            </div>
+          </div>
+          <div class="share-note-content">${esc(note.content || "")}</div>
+        `;
+        document.title = `${note.title} — Shared Note`;
+      }
+
+      function renderError(title, msg) {
+        document.getElementById("share-card").innerHTML = `
+          <div class="share-state">
+            <div class="share-state-icon">🔒</div>
+            <h2>${esc(title)}</h2>
+            <p>${esc(msg)}</p>
+          </div>`;
+        document.title = "Note not found";
+      }
+
+      function loadSharedNote() {
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get("token");
+
+        if (!token) {
+          renderError(
+            "No note specified",
+            "This link doesn't point to a specific note. Check the URL and try again.",
+          );
+          return;
+        }
+
+        // Decode token: base64url → JSON {id, key}
+        let payload;
+        try {
+          const json = atob(token.replace(/-/g, "+").replace(/_/g, "/"));
+          payload = JSON.parse(json);
+        } catch {
+          renderError(
+            "Invalid link",
+            "This share link appears to be corrupted or invalid.",
+          );
+          return;
+        }
+
+        // Load notes from localStorage
+        let notes = [];
+        try {
+          const raw = localStorage.getItem("notes_data");
+          notes = raw ? JSON.parse(raw) : [];
+        } catch {
+          notes = [];
+        }
+
+        const note = notes.find((n) => n.id === payload.id);
+
+        if (!note) {
+          renderError(
+            "Note not found",
+            "This note may have been deleted or is no longer available.",
+          );
+          return;
+        }
+
+        // Validate the share key against stored share links
+        let shareLinks = {};
+        try {
+          const raw = localStorage.getItem("notes_share_links");
+          shareLinks = raw ? JSON.parse(raw) : {};
+        } catch {
+          shareLinks = {};
+        }
+
+        const stored = shareLinks[String(payload.id)];
+        if (!stored || stored.key !== payload.key) {
+          renderError(
+            "Link revoked",
+            "This share link has been revoked or is no longer valid.",
+          );
+          return;
+        }
+
+        renderNote(note);
+      }
+
+      loadSharedNote();
+    </script>
+  </body>
+</html>
