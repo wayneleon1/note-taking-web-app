@@ -295,7 +295,6 @@ body {
 }
 .sidebar-tags-section {
   flex: 1;
-  min-height: 0;
 }
 .sidebar-section-title {
   font-size: 11px;
@@ -1776,7 +1775,7 @@ body {
   background: var(--color-neutral-50);
 }
 .cat-picker-dot {
-  width: 10px;
+  max-width: 10px;
   height: 10px;
   border-radius: 50%;
   flex-shrink: 0;
