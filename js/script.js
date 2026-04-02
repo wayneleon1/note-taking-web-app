@@ -113,10 +113,6 @@ const settingsView = document.getElementById("settings-view");
 //   RICH TEXT EDITOR  (replaces <textarea>)
 // ══════════════════════════════════════════
 
-/**
- * Inject the formatting toolbar + contenteditable area into the DOM.
- * Called once at startup; replaces the original <textarea id="detail-content">.
- */
 function initRichTextEditor() {
   const textarea = document.getElementById("detail-content");
   if (!textarea) return;
