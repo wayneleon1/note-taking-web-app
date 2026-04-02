@@ -9,6 +9,7 @@ const STORAGE_KEYS = {
   colorTheme: "colorTheme",
   fontTheme: "fontTheme",
   draft: "notes_draft",
+  shareLinks: "notes_share_links",
 };
 
 /**
@@ -606,6 +607,147 @@ function attachLocationToNote() {
   );
 }
 
+// ══════════════════════════════════════════
+//  NOTE SHARING
+// ══════════════════════════════════════════
+
+/**
+ * Generate a random alphanumeric key for a share link.
+ */
+function generateShareKey() {
+  const chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let key = "";
+  for (let i = 0; i < 20; i++) {
+    key += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return key;
+}
+
+/**
+ * Encode {id, key} as a URL-safe base64 token.
+ */
+function encodeShareToken(id, key) {
+  const json = JSON.stringify({ id, key });
+  return btoa(json).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+/**
+ * Get or create a share link for a given note id.
+ * Returns the full shareable URL string.
+ */
+function getOrCreateShareLink(noteId) {
+  let shareLinks = lsGet(STORAGE_KEYS.shareLinks, {});
+
+  if (!shareLinks[String(noteId)]) {
+    // Create a new link
+    const key = generateShareKey();
+    shareLinks[String(noteId)] = {
+      key,
+      createdAt: new Date().toISOString(),
+    };
+    lsSet(STORAGE_KEYS.shareLinks, shareLinks);
+  }
+
+  const { key } = shareLinks[String(noteId)];
+  const token = encodeShareToken(noteId, key);
+  const base = window.location.href.split("/").slice(0, -1).join("/");
+  return `${base}/share.html?token=${token}`;
+}
+
+/**
+ * Revoke the share link for a given note id.
+ */
+function revokeShareLink(noteId) {
+  let shareLinks = lsGet(STORAGE_KEYS.shareLinks, {});
+  delete shareLinks[String(noteId)];
+  lsSet(STORAGE_KEYS.shareLinks, shareLinks);
+}
+
+/**
+ * Returns whether a note currently has an active share link.
+ */
+function noteHasShareLink(noteId) {
+  const shareLinks = lsGet(STORAGE_KEYS.shareLinks, {});
+  return Boolean(shareLinks[String(noteId)]);
+}
+
+/**
+ * Open the share modal for the active note.
+ */
+function openShareModal(noteId) {
+  const note = notes.find((n) => n.id === noteId);
+  if (!note) return;
+
+  const overlay = document.getElementById("modal-share-overlay");
+  const titleEl = document.getElementById("share-modal-note-title");
+  const urlInput = document.getElementById("share-url-input");
+  const revokeBtn = document.getElementById("share-revoke-btn");
+  const copyBtn = document.getElementById("share-copy-btn");
+
+  titleEl.textContent = note.title;
+
+  const url = getOrCreateShareLink(noteId);
+  urlInput.value = url;
+
+  // Sync revoke button state
+  revokeBtn.style.display = "inline-flex";
+
+  // Wire copy button
+  copyBtn.onclick = () => copyShareLink(url, copyBtn);
+
+  // Wire revoke button
+  revokeBtn.onclick = () => {
+    revokeShareLink(noteId);
+    closeShareModal();
+    showToast("Share link revoked.");
+    // Refresh actions panel
+    const currentNote = notes.find((n) => n.id === activeNoteId);
+    if (currentNote) renderActionsPanel(currentNote);
+  };
+
+  overlay.style.display = "flex";
+}
+
+/**
+ * Copy a URL to clipboard, briefly swap the button label.
+ */
+function copyShareLink(url, btn) {
+  navigator.clipboard
+    .writeText(url)
+    .then(() => {
+      const originalHtml = btn.innerHTML;
+      btn.innerHTML = `
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+      Copied!`;
+      btn.classList.add("share-copy-btn--copied");
+      setTimeout(() => {
+        btn.innerHTML = originalHtml;
+        btn.classList.remove("share-copy-btn--copied");
+      }, 2000);
+    })
+    .catch(() => {
+      // Fallback: select the input
+      const input = document.getElementById("share-url-input");
+      if (input) {
+        input.select();
+        input.setSelectionRange(0, 99999);
+      }
+      showToast(
+        "Press Ctrl+C / Cmd+C to copy the link.",
+        null,
+        null,
+        "success",
+      );
+    });
+}
+
+function closeShareModal() {
+  document.getElementById("modal-share-overlay").style.display = "none";
+}
+
 //  RENDER
 function renderAll() {
   renderSidebarTags();
@@ -752,6 +894,9 @@ function renderActionsPanel(note) {
     actionsPanel.innerHTML = "";
     return;
   }
+
+  const hasLink = noteHasShareLink(note.id);
+
   if (note.isArchived) {
     actionsPanel.innerHTML = `
       <button class="action-card" id="btn-restore">
@@ -776,6 +921,13 @@ function renderActionsPanel(note) {
       </button>
       <button class="action-card" id="btn-location" title="Attach your current location to this note">
         <img src="./assets/images/icon-tag.svg" alt="" />Add Location
+      </button>
+      <button class="action-card action-card--share${hasLink ? " action-card--share-active" : ""}" id="btn-share">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+        </svg>
+        ${hasLink ? "Shared — Manage" : "Share Note"}
       </button>`;
     document
       .getElementById("btn-archive")
@@ -786,6 +938,9 @@ function renderActionsPanel(note) {
     document
       .getElementById("btn-location")
       .addEventListener("click", attachLocationToNote);
+    document
+      .getElementById("btn-share")
+      .addEventListener("click", () => openShareModal(note.id));
   }
 }
 
@@ -924,6 +1079,8 @@ function closeArchiveModal() {
 }
 
 function deleteNote(noteId) {
+  // Also clean up share link when a note is permanently deleted
+  revokeShareLink(noteId);
   notes = notes.filter((n) => n.id !== noteId);
   persistNotes();
   activeNoteId = null;
@@ -1102,6 +1259,17 @@ document
       closeArchiveModal();
   });
 
+/* ── Share modal ── */
+document
+  .getElementById("modal-share-cancel")
+  .addEventListener("click", closeShareModal);
+document
+  .getElementById("modal-share-overlay")
+  .addEventListener("click", (e) => {
+    if (e.target === document.getElementById("modal-share-overlay"))
+      closeShareModal();
+  });
+
 /* ── Toast close ── */
 document.getElementById("toast-close").addEventListener("click", dismissToast);
 
@@ -1110,12 +1278,17 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
     const delModal = document.getElementById("modal-delete-overlay");
     const archModal = document.getElementById("modal-archive-overlay");
+    const shareModal = document.getElementById("modal-share-overlay");
     if (delModal.style.display !== "none") {
       closeDeleteModal();
       return;
     }
     if (archModal.style.display !== "none") {
       closeArchiveModal();
+      return;
+    }
+    if (shareModal.style.display !== "none") {
+      closeShareModal();
       return;
     }
     if (detailPanel.classList.contains("mobile-visible"))

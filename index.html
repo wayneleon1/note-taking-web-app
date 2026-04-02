@@ -671,6 +671,85 @@
       </div>
     </div>
 
+    <!-- ── Share Note Modal ── -->
+    <div
+      class="modal-overlay"
+      id="modal-share-overlay"
+      style="display: none"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-share-title"
+    >
+      <div class="modal modal--share">
+        <div class="modal-body">
+          <div class="modal-icon modal-icon--share">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="18" cy="5" r="3" />
+              <circle cx="6" cy="12" r="3" />
+              <circle cx="18" cy="19" r="3" />
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+            </svg>
+          </div>
+          <div class="modal-text">
+            <h2 class="modal-title" id="modal-share-title">Share Note</h2>
+            <p class="modal-message">
+              Anyone with this link can view
+              <strong id="share-modal-note-title"></strong> as a read-only page.
+            </p>
+          </div>
+        </div>
+
+        <div class="share-url-row">
+          <input
+            class="share-url-input"
+            type="text"
+            id="share-url-input"
+            readonly
+            aria-label="Share link"
+          />
+          <button class="btn btn-primary share-copy-btn" id="share-copy-btn">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path
+                d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+              ></path>
+            </svg>
+            Copy link
+          </button>
+        </div>
+
+        <div class="modal-footer share-modal-footer">
+          <button class="btn btn-border share-revoke-btn" id="share-revoke-btn">
+            Revoke link
+          </button>
+          <button class="btn btn-secondary" id="modal-share-cancel">
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- ── Toast notification ── -->
     <div
       class="toast"

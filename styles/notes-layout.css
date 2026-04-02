@@ -126,7 +126,7 @@ body {
 }
 
 /* ─────────────────────────────────────────
-   ACTION CARD  (Desktop: Archive / Delete / Restore)
+   ACTION CARD  (Desktop: Archive / Delete / Restore / Share)
 ───────────────────────────────────────── */
 .action-card {
   display: flex;
@@ -156,12 +156,31 @@ body {
   height: 18px;
   flex-shrink: 0;
 }
+.action-card svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
 .action-card--danger {
   color: var(--color-red-500);
 }
 .action-card--danger:hover {
   background-color: var(--color-red-100);
   border-color: var(--color-red-500);
+}
+
+/* Share action card: active (link exists) state */
+.action-card--share-active {
+  border-color: var(--color-blue-500);
+  background-color: var(--color-blue-50);
+  color: var(--color-blue-700);
+}
+.action-card--share-active:hover {
+  background-color: var(--color-blue-50);
+  border-color: var(--color-blue-700);
+}
+.action-card--share-active svg {
+  color: var(--color-blue-500);
 }
 
 /* ─────────────────────────────────────────
@@ -526,7 +545,7 @@ body {
 }
 
 /* ─────────────────────────────────────────
-   MODALS (Delete + Archive)
+   MODALS (Delete + Archive + Share)
 ───────────────────────────────────────── */
 .modal-overlay {
   position: fixed;
@@ -593,6 +612,20 @@ body {
   height: 20px;
   opacity: 0.75;
 }
+.modal-icon svg {
+  width: 20px;
+  height: 20px;
+  opacity: 0.75;
+}
+.modal-icon--share {
+  background: var(--color-blue-50);
+  border-color: var(--color-blue-500);
+  color: var(--color-blue-500);
+}
+.modal-icon--share svg {
+  opacity: 1;
+  color: var(--color-blue-500);
+}
 
 /* Text */
 .modal-text {
@@ -609,6 +642,9 @@ body {
   font-size: 14px;
   color: var(--color-neutral-600);
   line-height: 1.6;
+}
+.modal-message strong {
+  color: var(--color-neutral-800);
 }
 
 /* Divider + footer */
@@ -630,6 +666,76 @@ body {
 .btn-danger:hover {
   background-color: #d4192a;
   border-color: #d4192a;
+}
+
+/* ─────────────────────────────────────────
+   SHARE MODAL — URL ROW + COPY BUTTON
+───────────────────────────────────────── */
+.modal--share {
+  max-width: 480px;
+}
+
+.share-url-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 24px 20px;
+}
+
+.share-url-input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 12px;
+  border: 1.5px solid var(--color-neutral-200);
+  border-radius: 8px;
+  background: var(--color-neutral-50);
+  font-size: 13px;
+  font-family: "Courier New", monospace;
+  color: var(--color-neutral-600);
+  outline: none;
+  cursor: text;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: border-color 0.15s;
+}
+.share-url-input:focus {
+  border-color: var(--color-neutral-400);
+}
+
+.share-copy-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  font-size: 13px;
+  padding: 9px 16px;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
+}
+.share-copy-btn svg {
+  flex-shrink: 0;
+}
+.share-copy-btn--copied {
+  background-color: var(--color-green-500) !important;
+  border-color: var(--color-green-500) !important;
+}
+
+/* Share modal footer: revoke left, done right */
+.share-modal-footer {
+  justify-content: space-between;
+}
+
+.share-revoke-btn {
+  font-size: 13px;
+  color: var(--color-neutral-500);
+}
+.share-revoke-btn:hover {
+  color: var(--color-red-500);
+  border-color: var(--color-red-500);
+  background-color: var(--color-red-100);
 }
 
 /* ─────────────────────────────────────────
@@ -1006,6 +1112,15 @@ body {
   }
   .detail-panel.mobile-visible .detail-empty {
     display: none;
+  }
+
+  /* ── Share modal on tablet: full-width ── */
+  .share-url-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .share-copy-btn {
+    justify-content: center;
   }
 }
 
