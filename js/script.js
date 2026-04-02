@@ -77,7 +77,7 @@ let currentView = "all";
 let activeNoteId = null;
 let isNewNote = false;
 let searchQuery = "";
-let draftTimer = null; // debounce timer for auto-saving draft
+let draftTimer = null;
 
 let appSettings = {
   colorTheme: lsGet(STORAGE_KEYS.colorTheme, "light"),
@@ -109,14 +109,161 @@ const mobileArchiveBtn = document.getElementById("mobile-archive-btn");
 const notesView = document.getElementById("notes-view");
 const settingsView = document.getElementById("settings-view");
 
-//  DATA — LOAD / SAVE
+// ══════════════════════════════════════════
+//   RICH TEXT EDITOR  (replaces <textarea>)
+// ══════════════════════════════════════════
+
+/**
+ * Inject the formatting toolbar + contenteditable area into the DOM.
+ * Called once at startup; replaces the original <textarea id="detail-content">.
+ */
+function initRichTextEditor() {
+  const textarea = document.getElementById("detail-content");
+  if (!textarea) return;
+
+  // Build toolbar
+  const toolbar = document.createElement("div");
+  toolbar.className = "rte-toolbar";
+  toolbar.setAttribute("aria-label", "Formatting toolbar");
+  toolbar.innerHTML = `
+    <div class="rte-toolbar-group">
+      <button type="button" class="rte-btn" data-cmd="bold" title="Bold (Ctrl+B)" aria-label="Bold">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 2h4.5a3 3 0 0 1 0 6H3V2zm0 6h5a3 3 0 0 1 0 6H3V8z" fill="currentColor"/>
+        </svg>
+      </button>
+      <button type="button" class="rte-btn" data-cmd="italic" title="Italic (Ctrl+I)" aria-label="Italic">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6 2h5M3 12h5M8 2 6 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button type="button" class="rte-btn" data-cmd="underline" title="Underline (Ctrl+U)" aria-label="Underline">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 2v5a4 4 0 0 0 8 0V2M2 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+       <button type="button" class="rte-btn" data-cmd="insertUnorderedList" title="Bullet list" aria-label="Bullet list">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="2" cy="3.5" r="1.25" fill="currentColor"/>
+          <circle cx="2" cy="7" r="1.25" fill="currentColor"/>
+          <circle cx="2" cy="10.5" r="1.25" fill="currentColor"/>
+          <path d="M5.5 3.5h7M5.5 7h7M5.5 10.5h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button type="button" class="rte-btn" data-cmd="insertOrderedList" title="Numbered list" aria-label="Numbered list">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M1.5 2v3M1 4.5h1.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M1 8.5c0-.8.5-1 1-1s1 .3 1 .8-.4.7-.8.8L1 10.5h2" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M5.5 3.5h7M5.5 7h7M5.5 10.5h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+  `;
+
+  // Build contenteditable editor
+  const editor = document.createElement("div");
+  editor.className = "rte-editor";
+  editor.id = "detail-content-editor";
+  editor.setAttribute("contenteditable", "true");
+  editor.setAttribute("role", "textbox");
+  editor.setAttribute("aria-multiline", "true");
+  editor.setAttribute("aria-label", "Note content");
+  editor.setAttribute("data-placeholder", "Start typing your note here...");
+
+  // Wrap both in a container
+  const wrapper = document.createElement("div");
+  wrapper.className = "rte-wrapper";
+  wrapper.appendChild(toolbar);
+  wrapper.appendChild(editor);
+
+  // Replace textarea with wrapper; keep textarea hidden for form compatibility
+  textarea.parentNode.insertBefore(wrapper, textarea);
+  textarea.style.display = "none";
+
+  // ── Toolbar button logic ──
+  toolbar.querySelectorAll(".rte-btn[data-cmd]").forEach((btn) => {
+    btn.addEventListener("mousedown", (e) => {
+      // Prevent editor from losing focus
+      e.preventDefault();
+      const cmd = btn.dataset.cmd;
+      document.execCommand(cmd, false, null);
+      updateToolbarState();
+      editor.focus();
+      scheduleDraftSave();
+    });
+  });
+
+  // ── Update active state on selection change ──
+  document.addEventListener("selectionchange", () => {
+    if (document.activeElement === editor) updateToolbarState();
+  });
+
+  // ── Draft auto-save on input ──
+  editor.addEventListener("input", scheduleDraftSave);
+
+  // ── Keyboard shortcut fallback info (browser handles Ctrl+B/I/U natively) ──
+  editor.addEventListener("keydown", (e) => {
+    // Trap Tab key to insert spaces instead of leaving editor
+    if (e.key === "Tab") {
+      e.preventDefault();
+      document.execCommand("insertText", false, "    ");
+    }
+  });
+}
+
+/** Reflect current formatting state onto toolbar buttons */
+function updateToolbarState() {
+  const commands = [
+    "bold",
+    "italic",
+    "underline",
+    "insertUnorderedList",
+    "insertOrderedList",
+  ];
+  commands.forEach((cmd) => {
+    const btn = document.querySelector(`.rte-btn[data-cmd="${cmd}"]`);
+    if (!btn) return;
+    try {
+      btn.classList.toggle("active", document.queryCommandState(cmd));
+    } catch {
+      // queryCommandState can throw in some browsers — ignore
+    }
+  });
+}
+
+/** Get HTML content from the rich text editor */
+function getEditorContent() {
+  const editor = document.getElementById("detail-content-editor");
+  if (!editor) return "";
+  // Return empty string if only whitespace/placeholder
+  const text = editor.innerText.trim();
+  if (!text) return "";
+  return editor.innerHTML;
+}
+
+/** Set HTML content into the rich text editor */
+function setEditorContent(html) {
+  const editor = document.getElementById("detail-content-editor");
+  if (!editor) return;
+  editor.innerHTML = html || "";
+}
+
+/** Clear the editor */
+function clearEditorContent() {
+  const editor = document.getElementById("detail-content-editor");
+  if (editor) editor.innerHTML = "";
+}
+
+// ══════════════════════════════════════════
+//   DATA — LOAD / SAVE
+// ══════════════════════════════════════════
+
 async function loadNotes() {
   const stored = lsGet(STORAGE_KEYS.notes, null);
 
   if (stored && Array.isArray(stored) && stored.length > 0) {
     notes = stored;
   } else {
-    // First run — seed from data.json
     try {
       const res = await fetch("data.json");
       if (!res.ok) throw new Error("No data.json");
@@ -125,25 +272,22 @@ async function loadNotes() {
     } catch {
       notes = getFallbackNotes();
     }
-    persistNotes(); // write seed data to localStorage
+    persistNotes();
   }
 
   applySettings();
   renderAll();
-  restoreDraftIfAny(); // sessionStorage draft check
+  restoreDraftIfAny();
 }
 
-/** Write current notes array to localStorage */
 function persistNotes() {
   lsSet(STORAGE_KEYS.notes, notes);
 }
 
-/** Check sessionStorage for an unsaved draft and offer to restore it */
 function restoreDraftIfAny() {
   const draft = loadDraft();
   if (!draft || !draft.title) return;
 
-  // Show draft banner
   const banner = document.createElement("div");
   banner.className = "draft-banner";
   banner.innerHTML = `
@@ -157,12 +301,11 @@ function restoreDraftIfAny() {
 
   document.getElementById("btn-restore-draft").addEventListener("click", () => {
     banner.remove();
-    // Open a new note form pre-filled with draft
     isNewNote = true;
     activeNoteId = null;
     detailTitleInput.value = draft.title;
     detailTagsInput.value = draft.tags || "";
-    detailContentArea.value = draft.content || "";
+    setEditorContent(draft.content || "");
     detailDateSpan.textContent = "Not yet saved";
     detailStatusRow.style.display = "none";
     updateMobileActionIcons(false, false);
@@ -187,7 +330,7 @@ function getFallbackNotes() {
       title: "React Performance Optimization",
       tags: ["Dev", "React"],
       content:
-        "Key performance optimization techniques:\n\n1. Code Splitting\n- Use React.lazy() for route-based splitting\n- Implement dynamic imports for heavy components\n\n2. Memoization\n- useMemo for expensive calculations\n- useCallback for function props\n- React.memo for component optimization\n\n3. Virtual List Implementation\n- Use react-window for long lists\n- Implement infinite scrolling\n\nTODO: Benchmark current application and identify bottlenecks",
+        "<p>Key performance optimization techniques:</p><ol><li><strong>Code Splitting</strong> — Use React.lazy() for route-based splitting; implement dynamic imports for heavy components.</li><li><strong>Memoization</strong> — useMemo for expensive calculations; useCallback for function props; React.memo for component optimization.</li><li><strong>Virtual List Implementation</strong> — Use react-window for long lists; implement infinite scrolling.</li></ol><p>TODO: Benchmark current application and identify bottlenecks</p>",
       lastEdited: "2024-10-29T10:15:00Z",
       isArchived: false,
     },
@@ -196,7 +339,7 @@ function getFallbackNotes() {
       title: "Japan Travel Planning",
       tags: ["Travel", "Personal"],
       content:
-        "Japan Trip Planning - Spring 2025\n\nItinerary Draft:\nWeek 1: Tokyo\n- Shibuya and Harajuku\n- TeamLab Digital Art Museum\n- Day trip to Mount Fuji\n\nWeek 2: Kyoto & Osaka\n- Traditional temples\n- Cherry blossom viewing\n- Food tour in Osaka\n\nBudget: $3000\nAccommodation: Mix of hotels and traditional ryokans\nJR Pass: 14 days\n\nTODO: Book flights 6 months in advance",
+        "<p><strong>Japan Trip Planning — Spring 2025</strong></p><p><u>Itinerary Draft:</u></p><p><strong>Week 1: Tokyo</strong></p><ul><li>Shibuya and Harajuku</li><li>TeamLab Digital Art Museum</li><li>Day trip to Mount Fuji</li></ul><p><strong>Week 2: Kyoto &amp; Osaka</strong></p><ul><li>Traditional temples</li><li>Cherry blossom viewing</li><li>Food tour in Osaka</li></ul><p>Budget: $3000 · Accommodation: Mix of hotels and traditional ryokans · JR Pass: 14 days</p><p>TODO: Book flights 6 months in advance</p>",
       lastEdited: "2024-10-28T16:45:00Z",
       isArchived: false,
     },
@@ -205,7 +348,7 @@ function getFallbackNotes() {
       title: "Favorite Pasta Recipes",
       tags: ["Cooking", "Recipes"],
       content:
-        "Classic Italian Recipes:\n\n1. Carbonara\n- Eggs, pecorino, guanciale\n- No cream ever!\n- Save pasta water\n\n2. Cacio e Pepe\n- Pecorino Romano\n- Fresh black pepper\n- Technique is crucial\n\n3. Arrabbiata\n- San Marzano tomatoes\n- Fresh garlic\n- Red pepper flakes\n\nNote: Always use high-quality ingredients",
+        "<p><strong>Classic Italian Recipes:</strong></p><ol><li><strong>Carbonara</strong> — Eggs, pecorino, guanciale. <em>No cream ever!</em> Save pasta water.</li><li><strong>Cacio e Pepe</strong> — Pecorino Romano, fresh black pepper. Technique is crucial.</li><li><strong>Arrabbiata</strong> — San Marzano tomatoes, fresh garlic, red pepper flakes.</li></ol><p>Note: Always use high-quality ingredients</p>",
       lastEdited: "2024-10-27T14:30:00Z",
       isArchived: false,
     },
@@ -214,7 +357,7 @@ function getFallbackNotes() {
       title: "TypeScript Migration Guide",
       tags: ["Dev", "React", "TypeScript"],
       content:
-        "Project migration steps:\n\n1. Initial Setup\n- Install TypeScript dependencies\n- Configure tsconfig.json\n- Set up build pipeline\n\n2. Migration Strategy\n- Start with newer modules\n- Add type definitions gradually\n- Use 'any' temporarily for complex cases\n\n3. Testing Approach\n- Update test configuration\n- Add type testing\n- Validate build process\n\nDeadline: End of Q4 2024",
+        "<p>Project migration steps:</p><ol><li>Install TypeScript dependencies, configure tsconfig.json, set up build pipeline.</li><li>Start with newer modules, add type definitions gradually, use 'any' temporarily for complex cases.</li><li>Update test configuration, add type testing, validate build process.</li></ol><p><strong>Deadline:</strong> End of Q4 2024</p>",
       lastEdited: "2024-10-26T09:20:00Z",
       isArchived: true,
     },
@@ -223,7 +366,7 @@ function getFallbackNotes() {
       title: "Weekly Workout Plan",
       tags: ["Fitness", "Health"],
       content:
-        "Monday: Upper Body\n- Bench Press 4x8\n- Rows 4x10\n- Shoulder Press 3x12\n- Pull-ups 3 sets\n\nWednesday: Lower Body\n- Squats 4x8\n- Romanian Deadlifts 3x10\n- Lunges 3x12 each\n- Calf Raises 4x15\n\nFriday: Full Body\n- Deadlifts 3x5\n- Push-ups 3x12\n- Leg Press 3x12\n- Core Work\n\nCardio: Tuesday/Thursday - 30 min run",
+        "<p><strong>Monday: Upper Body</strong></p><ul><li>Bench Press 4×8</li><li>Rows 4×10</li><li>Shoulder Press 3×12</li><li>Pull-ups 3 sets</li></ul><p><strong>Wednesday: Lower Body</strong></p><ul><li>Squats 4×8</li><li>Romanian Deadlifts 3×10</li><li>Lunges 3×12 each</li><li>Calf Raises 4×15</li></ul><p><strong>Friday: Full Body</strong></p><ul><li>Deadlifts 3×5</li><li>Push-ups 3×12</li><li>Leg Press 3×12</li><li>Core Work</li></ul><p><em>Cardio: Tuesday/Thursday — 30 min run</em></p>",
       lastEdited: "2024-10-25T18:10:00Z",
       isArchived: false,
     },
@@ -232,7 +375,7 @@ function getFallbackNotes() {
       title: "Gift Ideas",
       tags: ["Personal", "Shopping"],
       content:
-        "Birthday and Holiday Gift List:\n\nMom:\n- Cooking class subscription\n- Kindle Paperwhite\n- Spa day package\n\nDad:\n- Golf lessons\n- Wireless earbuds\n- BBQ accessories\n\nSister:\n- Art supplies set\n- Yoga mat kit\n- Coffee subscription\n\nBudget per person: $150-200",
+        "<p>Birthday and Holiday Gift List:</p><p><strong>Mom:</strong></p><ul><li>Cooking class subscription</li><li>Kindle Paperwhite</li><li>Spa day package</li></ul><p><strong>Dad:</strong></p><ul><li>Golf lessons</li><li>Wireless earbuds</li><li>BBQ accessories</li></ul><p><strong>Sister:</strong></p><ul><li>Art supplies set</li><li>Yoga mat kit</li><li>Coffee subscription</li></ul><p>Budget per person: $150–200</p>",
       lastEdited: "2024-10-20T11:30:15Z",
       isArchived: true,
     },
@@ -241,7 +384,7 @@ function getFallbackNotes() {
       title: "React Component Library",
       tags: ["Dev", "React"],
       content:
-        "Custom Component Library:\n\n1. Basic: Button, Input, Card, Modal\n2. Form: FormField, Select, Checkbox, RadioGroup\n3. Layout: Container, Grid, Flex\n\nAll components need TypeScript defs, unit tests, Storybook docs, a11y support.",
+        "<p>Custom Component Library:</p><ol><li><strong>Basic:</strong> Button, Input, Card, Modal</li><li><strong>Form:</strong> FormField, Select, Checkbox, RadioGroup</li><li><strong>Layout:</strong> Container, Grid, Flex</li></ol><p>All components need TypeScript defs, unit tests, Storybook docs, a11y support.</p>",
       lastEdited: "2024-10-15T14:23:45Z",
       isArchived: true,
     },
@@ -250,7 +393,7 @@ function getFallbackNotes() {
       title: "Meal Prep Ideas",
       tags: ["Cooking", "Health", "Recipes"],
       content:
-        "Weekly Meal Prep Plan:\n\nBreakfast: Overnight oats, Egg muffins, Smoothie packs\nLunch: Greek chicken bowl, Buddha bowls, Tuna pasta salad\nSnacks: Cut vegetables, Mixed nuts, Greek yogurt parfait\n\nPrep Time: Sunday 2-4pm. Glass containers. Lasts 4-5 days.",
+        "<p><strong>Weekly Meal Prep Plan:</strong></p><ul><li><strong>Breakfast:</strong> Overnight oats, Egg muffins, Smoothie packs</li><li><strong>Lunch:</strong> Greek chicken bowl, Buddha bowls, Tuna pasta salad</li><li><strong>Snacks:</strong> Cut vegetables, Mixed nuts, Greek yogurt parfait</li></ul><p>Prep Time: Sunday 2–4pm. Glass containers. Lasts 4–5 days.</p>",
       lastEdited: "2024-10-12T09:45:15Z",
       isArchived: false,
     },
@@ -259,7 +402,7 @@ function getFallbackNotes() {
       title: "Reading List",
       tags: ["Personal", "Dev"],
       content:
-        "Technical:\n- Clean Architecture – Robert Martin\n- Designing Data-Intensive Applications\n- TypeScript Design Patterns\n\nPersonal:\n- Deep Work – Cal Newport\n- Atomic Habits\n- The Psychology of Money\n\nGoal: one book/month.",
+        "<p><u>Technical:</u></p><ul><li>Clean Architecture — Robert Martin</li><li>Designing Data-Intensive Applications</li><li>TypeScript Design Patterns</li></ul><p><u>Personal:</u></p><ul><li>Deep Work — Cal Newport</li><li>Atomic Habits</li><li>The Psychology of Money</li></ul><p>Goal: one book/month.</p>",
       lastEdited: "2024-10-05T12:20:30Z",
       isArchived: false,
     },
@@ -268,7 +411,7 @@ function getFallbackNotes() {
       title: "Fitness Goals 2025",
       tags: ["Fitness", "Health", "Personal"],
       content:
-        "Strength: Bench 225 lbs, Squat 315 lbs, Deadlift 405 lbs\nCardio: Half marathon, 5k < 25 min\nHabits: Gym 4×/week, 10k steps/day, 7+ hrs sleep\n\nTrack in Strong app.",
+        "<p><strong>Strength targets:</strong> Bench 225 lbs · Squat 315 lbs · Deadlift 405 lbs</p><p><strong>Cardio:</strong> Half marathon, 5k &lt; 25 min</p><p><strong>Habits:</strong> Gym 4×/week, 10k steps/day, 7+ hrs sleep</p><p><em>Track in Strong app.</em></p>",
       lastEdited: "2024-09-22T07:30:00Z",
       isArchived: false,
     },
@@ -308,12 +451,15 @@ function getFilteredNotes() {
   });
   if (searchQuery.trim()) {
     const q = searchQuery.toLowerCase();
-    list = list.filter(
-      (n) =>
+    list = list.filter((n) => {
+      // Strip HTML tags for content search
+      const textContent = n.content.replace(/<[^>]+>/g, " ");
+      return (
         n.title.toLowerCase().includes(q) ||
-        n.content.toLowerCase().includes(q) ||
-        n.tags.some((t) => t.toLowerCase().includes(q)),
-    );
+        textContent.toLowerCase().includes(q) ||
+        n.tags.some((t) => t.toLowerCase().includes(q))
+      );
+    });
   }
   return list;
 }
@@ -353,7 +499,7 @@ function showToast(msg, link = null, onLink = null, type = "success") {
   }
 
   toastEl.style.display = "block";
-  toastEl.getBoundingClientRect(); // force reflow
+  toastEl.getBoundingClientRect();
   toastEl.classList.add("toast--visible");
   clearTimeout(toastEl._timer);
   toastEl._timer = setTimeout(dismissToast, 4000);
@@ -523,7 +669,7 @@ function switchSettingsPanel(panelId) {
     .forEach((p) => p.classList.toggle("active", p.id === `panel-${panelId}`));
 }
 
-//  GEOLOCATION — attach location tag to a note
+//  GEOLOCATION
 function attachLocationToNote() {
   if (!navigator.geolocation) {
     showToast(
@@ -542,7 +688,6 @@ function attachLocationToNote() {
       const { latitude, longitude } = pos.coords;
       let locationLabel = `${latitude.toFixed(3)},${longitude.toFixed(3)}`;
 
-      // Try to resolve city name via Nominatim (OpenStreetMap)
       try {
         const resp = await fetch(
           `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
@@ -559,7 +704,6 @@ function attachLocationToNote() {
         console.error("Failed to reverse geocode location.");
       }
 
-      // Add location as a tag on the active note (or new note in progress)
       const tag = `📍 ${locationLabel}`;
 
       if (activeNoteId !== null) {
@@ -567,7 +711,6 @@ function attachLocationToNote() {
         if (idx !== -1 && !notes[idx].tags.includes(tag)) {
           notes[idx].tags.push(tag);
           notes[idx].lastEdited = new Date().toISOString();
-          // Sync to detail tags input if note is open
           detailTagsInput.value = notes[idx].tags.join(", ");
           persistNotes();
           renderAll();
@@ -576,7 +719,6 @@ function attachLocationToNote() {
           showToast("Location already added to this note.");
         }
       } else if (isNewNote) {
-        // Add to new-note draft
         const existing = detailTagsInput.value.trim();
         detailTagsInput.value = existing ? `${existing}, ${tag}` : tag;
         showToast(`Location added: ${locationLabel}`);
@@ -648,6 +790,11 @@ function renderNotesList() {
     return;
   }
   filtered.forEach((note) => {
+    // Strip HTML for card preview
+    const previewText = note.content
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
     const card = document.createElement("article");
     card.className = "note-card" + (note.id === activeNoteId ? " active" : "");
     card.setAttribute("role", "listitem");
@@ -688,7 +835,7 @@ function openNote(noteId) {
 
   detailTitleInput.value = note.title;
   detailTagsInput.value = note.tags.join(", ");
-  detailContentArea.value = note.content;
+  setEditorContent(note.content);
   detailDateSpan.textContent = formatDate(note.lastEdited);
 
   detailStatusRow.style.display = note.isArchived ? "flex" : "none";
@@ -698,7 +845,7 @@ function openNote(noteId) {
   showDetailPanel();
   renderNotesList();
   renderActionsPanel(note);
-  clearDraft(); // opening a saved note clears any orphaned draft
+  clearDraft();
 }
 
 function openNewNote() {
@@ -706,7 +853,7 @@ function openNewNote() {
   activeNoteId = null;
   detailTitleInput.value = "";
   detailTagsInput.value = "";
-  detailContentArea.value = "";
+  clearEditorContent();
   detailDateSpan.textContent = "Not yet saved";
   detailStatusRow.style.display = "none";
   updateMobileActionIcons(false, false);
@@ -790,7 +937,6 @@ function renderActionsPanel(note) {
 }
 
 //  VIEW SWITCHING
-
 function setView(view) {
   currentView = view;
   activeNoteId = null;
@@ -814,11 +960,10 @@ function setView(view) {
 }
 
 //  CRUD
-
 function saveNote() {
   const title = detailTitleInput.value.trim();
   const tagsRaw = detailTagsInput.value.trim();
-  const content = detailContentArea.value.trim();
+  const content = getEditorContent(); // HTML from rich text editor
 
   if (!title) {
     detailTitleInput.focus();
@@ -854,7 +999,7 @@ function saveNote() {
   }
 
   persistNotes();
-  clearDraft(); // successfully saved — remove draft
+  clearDraft();
   detailDateSpan.textContent = formatDate(now);
   renderAll();
   const saved = notes.find((n) => n.id === activeNoteId);
@@ -933,16 +1078,14 @@ function deleteNote(noteId) {
 }
 
 //  DRAFT AUTO-SAVE  (sessionStorage, debounced)
-
 function scheduleDraftSave() {
   clearTimeout(draftTimer);
   draftTimer = setTimeout(() => {
     const title = detailTitleInput.value.trim();
     const tags = detailTagsInput.value.trim();
-    const content = detailContentArea.value.trim();
-    // Only save draft when actively writing a new note or editing
+    const content = getEditorContent();
     if (title || content) saveDraft(title, tags, content);
-  }, 800); // 800 ms debounce
+  }, 800);
 }
 
 //  EVENT LISTENERS
@@ -1057,10 +1200,11 @@ mobileArchiveBtn.addEventListener("click", () => {
   else confirmArchive(activeNoteId);
 });
 
-/* ── Draft auto-save: fire on every keystroke in title/tags/content ── */
-[detailTitleInput, detailTagsInput, detailContentArea].forEach((el) =>
+/* ── Draft auto-save: title + tags inputs ── */
+[detailTitleInput, detailTagsInput].forEach((el) =>
   el.addEventListener("input", scheduleDraftSave),
 );
+// Editor draft save is wired in initRichTextEditor()
 
 /* ── Search ── */
 searchInput.addEventListener("input", () => {
@@ -1131,4 +1275,5 @@ window
   });
 
 //  INIT
+initRichTextEditor();
 loadNotes();

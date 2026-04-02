@@ -32,14 +32,6 @@
   gap: 2px;
 }
 
-.rte-toolbar-divider {
-  width: 1px;
-  height: 18px;
-  background: var(--color-neutral-200);
-  margin: 0 6px;
-  flex-shrink: 0;
-}
-
 /* ── Toolbar buttons ── */
 .rte-btn {
   display: inline-flex;
