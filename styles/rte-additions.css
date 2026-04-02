@@ -1,0 +1,157 @@
+/* ── Wrapper: borderless, fills the same space the textarea did ── */
+.rte-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Toolbar: sits just above the editor, flush with panel ── */
+.rte-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  padding: 0 0 10px 0;
+  background: transparent;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--color-neutral-200);
+  margin-bottom: 16px;
+}
+
+.rte-toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.rte-toolbar-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--color-neutral-200);
+  margin: 0 5px;
+  flex-shrink: 0;
+}
+
+/* ── Toolbar buttons: small, quiet, text-like ── */
+.rte-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 26px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--color-neutral-400);
+  cursor: pointer;
+  transition:
+    background-color 0.1s ease,
+    color 0.1s ease;
+  flex-shrink: 0;
+  padding: 0;
+}
+.rte-btn:hover {
+  background: var(--color-neutral-100);
+  color: var(--color-neutral-700);
+}
+.rte-btn.active {
+  background: var(--color-neutral-100);
+  color: var(--color-neutral-950);
+}
+.rte-btn svg {
+  display: block;
+  pointer-events: none;
+}
+
+/* ── Editor body: identical feel to the original textarea ── */
+.rte-editor {
+  flex: 1;
+  min-height: 200px;
+  padding: 0;
+  outline: none;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--color-neutral-800);
+  font-family: inherit;
+  overflow-y: auto;
+  word-break: break-word;
+  background: transparent;
+  white-space: pre-wrap;
+}
+
+/* Placeholder via data attribute */
+.rte-editor:empty::before {
+  content: attr(data-placeholder);
+  color: var(--color-neutral-300);
+  pointer-events: none;
+  display: block;
+}
+
+/* ── Formatted content inside editor ── */
+.rte-editor p {
+  margin: 0;
+  min-height: 1.8em;
+}
+
+.rte-editor br {
+  display: block;
+}
+
+.rte-editor ul,
+.rte-editor ol {
+  margin: 4px 0 8px;
+  padding-left: 20px;
+}
+.rte-editor ul {
+  list-style-type: disc;
+}
+.rte-editor ol {
+  list-style-type: decimal;
+}
+.rte-editor li {
+  margin: 2px 0;
+  line-height: 1.8;
+}
+.rte-editor li::marker {
+  color: var(--color-neutral-400);
+}
+
+.rte-editor strong,
+.rte-editor b {
+  font-weight: 700;
+  color: var(--color-neutral-950);
+}
+.rte-editor em,
+.rte-editor i {
+  font-style: italic;
+}
+.rte-editor u {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ── Dark theme ── */
+[data-theme="dark"] .rte-btn:hover {
+  background: var(--color-neutral-200);
+  color: var(--color-neutral-700);
+}
+[data-theme="dark"] .rte-btn.active {
+  background: var(--color-neutral-200);
+  color: var(--color-neutral-950);
+}
+[data-theme="dark"] .rte-toolbar {
+  border-bottom-color: var(--color-neutral-200);
+}
+
+/* ── Mobile ── */
+@media (max-width: 767px) {
+  .rte-toolbar {
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+  }
+  .rte-btn {
+    width: 26px;
+    height: 24px;
+  }
+}
