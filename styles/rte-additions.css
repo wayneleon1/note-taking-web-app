@@ -1,0 +1,184 @@
+/* ══════════════════════════════════════════
+   RICH TEXT EDITOR
+   .rte-wrapper  → outer container (replaces textarea)
+   .rte-toolbar  → formatting button bar
+   .rte-editor   → contenteditable body
+══════════════════════════════════════════ */
+
+/* ── Wrapper ── */
+.rte-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  border: 1.5px solid transparent;
+  border-radius: 8px;
+  transition: border-color 0.15s ease;
+  overflow: hidden;
+}
+.rte-wrapper:focus-within {
+  border-color: var(--color-neutral-200);
+}
+
+/* ── Toolbar ── */
+.rte-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 8px;
+  background: var(--color-neutral-50);
+  border-bottom: 1.5px solid var(--color-neutral-200);
+  border-radius: 8px 8px 0 0;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.rte-toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.rte-toolbar-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--color-neutral-200);
+  margin: 0 6px;
+  flex-shrink: 0;
+}
+
+/* ── Toolbar buttons ── */
+.rte-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1.5px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-neutral-500);
+  cursor: pointer;
+  transition:
+    background-color 0.12s ease,
+    color 0.12s ease,
+    border-color 0.12s ease;
+  flex-shrink: 0;
+  padding: 0;
+}
+.rte-btn:hover {
+  background: var(--color-neutral-100);
+  color: var(--color-neutral-800);
+  border-color: var(--color-neutral-200);
+}
+.rte-btn.active {
+  background: var(--color-blue-50);
+  color: var(--color-blue-500);
+  border-color: var(--color-blue-500);
+}
+.rte-btn svg {
+  display: block;
+  pointer-events: none;
+}
+
+/* ── Editor body ── */
+.rte-editor {
+  flex: 1;
+  min-height: 200px;
+  padding: 14px 0 20px;
+  outline: none;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--color-neutral-800);
+  font-family: inherit;
+  overflow-y: auto;
+  word-break: break-word;
+  background: transparent;
+  border-radius: 0 0 8px 8px;
+}
+
+/* Placeholder via data attribute */
+.rte-editor:empty::before {
+  content: attr(data-placeholder);
+  color: var(--color-neutral-300);
+  pointer-events: none;
+}
+
+/* ── Formatted content inside editor ── */
+.rte-editor p {
+  margin: 0 0 6px;
+}
+.rte-editor p:last-child {
+  margin-bottom: 0;
+}
+
+.rte-editor ul,
+.rte-editor ol {
+  margin: 6px 0 10px;
+  padding-left: 22px;
+}
+.rte-editor ul {
+  list-style-type: disc;
+}
+.rte-editor ol {
+  list-style-type: decimal;
+}
+.rte-editor li {
+  margin: 3px 0;
+  line-height: 1.7;
+}
+.rte-editor li::marker {
+  color: var(--color-neutral-400);
+}
+
+.rte-editor strong,
+.rte-editor b {
+  font-weight: 700;
+  color: var(--color-neutral-950);
+}
+.rte-editor em,
+.rte-editor i {
+  font-style: italic;
+}
+.rte-editor u {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Focus ring: show toolbar context when editing */
+.rte-wrapper:focus-within .rte-toolbar {
+  background: var(--color-neutral-0);
+  border-bottom-color: var(--color-neutral-200);
+}
+
+/* ── Dark theme adjustments ── */
+[data-theme="dark"] .rte-toolbar {
+  background: var(--color-neutral-100);
+  border-bottom-color: var(--color-neutral-200);
+}
+[data-theme="dark"] .rte-wrapper:focus-within .rte-toolbar {
+  background: var(--color-neutral-100);
+}
+[data-theme="dark"] .rte-btn:hover {
+  background: var(--color-neutral-200);
+  color: var(--color-neutral-800);
+}
+[data-theme="dark"] .rte-btn.active {
+  background: var(--color-blue-50);
+  color: var(--color-blue-500);
+}
+
+/* ── Mobile: compact toolbar ── */
+@media (max-width: 767px) {
+  .rte-toolbar {
+    padding: 5px 6px;
+    gap: 1px;
+  }
+  .rte-btn {
+    width: 28px;
+    height: 28px;
+  }
+  .rte-editor {
+    padding: 12px 0 16px;
+  }
+}
