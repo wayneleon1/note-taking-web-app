@@ -58,7 +58,6 @@
         </nav>
 
         <!-- Tags -->
-
         <div class="sidebar-tags-section">
           <hr
             style="
@@ -69,6 +68,33 @@
           />
           <p class="sidebar-section-title">Tags</p>
           <nav class="sidebar-tags" id="sidebar-tags" aria-label="Tags"></nav>
+        </div>
+
+        <!-- Categories -->
+        <div class="sidebar-categories-section">
+          <hr
+            style="
+              margin: 4px 0 8px;
+              border: none;
+              border-top: 1px solid #e0e4ea;
+            "
+          />
+          <div class="sidebar-categories-header">
+            <p class="sidebar-section-title">Categories</p>
+            <button
+              class="sidebar-cat-add-btn"
+              id="sidebar-cat-add-btn"
+              aria-label="Manage categories"
+              title="Manage categories"
+            >
+              +
+            </button>
+          </div>
+          <nav
+            class="sidebar-categories-nav"
+            id="sidebar-categories-nav"
+            aria-label="Categories"
+          ></nav>
         </div>
       </aside>
       <!-- /sidebar -->
@@ -193,6 +219,23 @@
                     />
                   </span>
                 </div>
+
+                <!-- Category picker row -->
+                <div class="detail-meta-row" id="detail-category-row">
+                  <img
+                    src="./assets/images/icon-tag.svg"
+                    alt=""
+                    class="meta-icon"
+                  />
+                  <span class="meta-key">Category</span>
+                  <span class="meta-value">
+                    <div
+                      id="category-picker-wrap"
+                      class="category-picker-wrap"
+                    ></div>
+                  </span>
+                </div>
+
                 <div
                   class="detail-meta-row"
                   id="detail-status-row"
@@ -594,6 +637,27 @@
         <img src="./assets/images/icon-tag.svg" alt="" />
         <span>Tags</span>
       </button>
+      <button
+        class="bottom-nav-item"
+        id="bottom-nav-categories"
+        data-view="categories"
+      >
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path
+            d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"
+          />
+        </svg>
+        <span>Categories</span>
+      </button>
       <button class="bottom-nav-item" data-view="settings">
         <img src="./assets/images/icon-settings.svg" alt="" />
         <span>Settings</span>
@@ -604,6 +668,30 @@
     <button class="fab" id="fab-create" aria-label="Create new note">
       <img src="./assets/images/icon-plus.svg" alt="" />
     </button>
+
+    <!-- ── Category Manage Modal ── -->
+    <div
+      class="modal-overlay"
+      id="modal-category-overlay"
+      style="display: none"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-category-title"
+    >
+      <div class="modal modal--category">
+        <div class="modal-header">
+          <h2 class="modal-title" id="modal-category-title">
+            Manage Categories
+          </h2>
+          <button class="icon-btn" id="modal-category-close" aria-label="Close">
+            <img src="./assets/images/icon-cross.svg" alt="" />
+          </button>
+        </div>
+        <div class="modal-category-body" id="modal-category-body">
+          <!-- rendered by categories.js -->
+        </div>
+      </div>
+    </div>
 
     <!-- ── Delete Confirmation Modal ── -->
     <div
@@ -699,6 +787,7 @@
     </div>
 
     <script src="/auth/auth.js"></script>
+    <script src="/js/categories.js"></script>
     <script type="module" src="/js/script.js"></script>
   </body>
 </html>

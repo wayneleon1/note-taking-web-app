@@ -99,7 +99,6 @@ a {
 }
 
 /* SECONDARY BUTTON */
-
 .btn-secondary {
   background-color: var(--color-neutral-100);
   color: var(--color-neutral-800);
@@ -125,7 +124,6 @@ a {
 }
 
 /* BORDER BUTTON */
-
 .btn-border {
   background-color: var(--color-neutral-0);
   color: var(--color-neutral-800);
